@@ -23,6 +23,8 @@ conda activate XXX
 CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5
 
 CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5
+
+CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.cli --model-path ./data/interim/vicuna-7b-lora-CQ-v0-1215/checkpoint-100
 ```
 
 # Train
@@ -87,6 +89,40 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --per_device_eval_batch_size 2 \
     --gradient_accumulation_steps 4 \
     --save_total_limit 1 \
+    --learning_rate 2e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048
+```
+
+zhangqi python hjPara splitData backgroundData:
+```bash
+CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
+    --data_path ./data/raw/data_date121314_dataNum911.json \
+    --dev_ratio 0.1 \
+    --output_dir ./data/interim/vicuna-7b-lora-CQ-v0-121519-epoch20 \
+    --run_name vicuna-7b-lora-CQ-v0-121519-epoch20 \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "steps" \
+    --eval_steps 20  \
+    --save_strategy "steps" \
+    --save_steps 100 \
+    --save_total_limit 10 \
+    --num_train_epochs 20 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
