@@ -7,16 +7,22 @@ pip install wavedrom --use-pep517
 pip3 install -e ".[model_worker,webui]"
 pip install packaging
 pip3 install -e ".[train]"
-pip install bitsandbytes==0.39
+strings /usr/lib64/libstdc++.so.6 | grep GLIBCXX
+strings /usr/lib64/libstdc++.so.6 | grep CXXABI
+pip install bitsandbytes-cuda116
+pip install scipy
+python -m bitsandbytes
 ```
+
+remove (comment) the bitsandbytes code in /mnt/nfs/envs_hj/envs/FASTCHAT/lib/python3.9/site-packages/peft/tuners/lora/model.py manually!!!
 
 # Eval
 ```bash
 conda activate XXX
 
-CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path ~/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5
+CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5
 
-CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path ~/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5
+CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5
 ```
 
 # Train

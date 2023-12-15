@@ -25,7 +25,8 @@ from deepspeed import zero
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import transformers
-from transformers import Trainer, BitsAndBytesConfig, deepspeed
+from transformers import Trainer, deepspeed
+# from transformers import BitsAndBytesConfig
 import torch
 
 from fastchat.train.train import (
@@ -135,14 +136,15 @@ def train():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         device_map=device_map,
-        quantization_config=BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=compute_dtype,
-        )
-        if lora_args.q_lora
-        else None,
+        # quantization_config=BitsAndBytesConfig(
+        #     load_in_4bit=True,
+        #     bnb_4bit_use_double_quant=True,
+        #     bnb_4bit_quant_type="nf4",
+        #     bnb_4bit_compute_dtype=compute_dtype,
+        # 
+        # )
+        # if lora_args.q_lora
+        # else None,
     )
     lora_config = LoraConfig(
         r=lora_args.lora_r,
