@@ -135,7 +135,9 @@ python fastchat/train/train_lora.py \
     --lr_scheduler_type "cosine" \
     --logging_strategy "steps" \
     --evaluation_strategy "steps" \
+    --eval_steps 100  \
     --save_strategy "steps" \
+    --save_steps 100 \
     --num_train_epochs 5 \
     --lora_r 32 \
     --lora_alpha 16 \
@@ -143,8 +145,6 @@ python fastchat/train/train_lora.py \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 2 \
     --gradient_accumulation_steps 4 \
-    --eval_steps 100  \
-    --save_steps 100 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
