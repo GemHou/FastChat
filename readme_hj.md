@@ -121,7 +121,7 @@ python fastchat/train/train_lora.py \
 ```
 
 ```bash
-python fastchat/train/train_lora.py \
+CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
     --data_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/slm/data/raw/CQ-project-data/train_vicuna.json \
     --eval_data_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/slm/data/raw/CQ-project-data/train_vicuna.json \
