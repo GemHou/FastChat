@@ -26,6 +26,8 @@ CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhang
 ```
 
 # Train
+
+official readme: 
 ```bash
 torchrun --nproc_per_node=4 --master_port=20001 fastchat/train/train_mem.py \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
@@ -53,6 +55,7 @@ torchrun --nproc_per_node=4 --master_port=20001 fastchat/train/train_mem.py \
     --lazy_preprocess True
 ```
 
+zhangqi: 
 ```bash
 deepspeed --master_port=29668 --include localhost:3 fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
@@ -87,6 +90,7 @@ deepspeed --master_port=29668 --include localhost:3 fastchat/train/train_lora.py
     --run_name vicuna-7b-lora-CQ-v0-1212
 ```
 
+zhangqi python
 ```bash
 python fastchat/train/train_lora.py \
     --model_name_or_path ~/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
@@ -120,6 +124,7 @@ python fastchat/train/train_lora.py \
     --run_name vicuna-7b-lora-CQ-v0-1212
 ```
 
+zhangqi python hjPara:
 ```bash
 CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \

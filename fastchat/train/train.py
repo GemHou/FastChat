@@ -55,6 +55,9 @@ class DataArguments:
     eval_data_path: str = field(
         default=None, metadata={"help": "Path to the evaluation data."}
     )
+    dev_ratio: str = field(
+        default=None, metadata={"help": "Eval dev ratio."}
+    )
     lazy_preprocess: bool = False
 
 
@@ -247,8 +250,16 @@ def make_supervised_data_module(
     if data_args.eval_data_path:
         eval_json = json.load(open(data_args.eval_data_path, "r"))
         eval_dataset = dataset_cls(eval_json, tokenizer=tokenizer)
+        assert data_args.dev_ratio is None
     else:
-        eval_dataset = None
+        if data_args.dev_ratio is None:
+            eval_dataset = None
+        else:
+            dataset_raw_train_test = train_dataset.train_test_split(test_size=data_args.dev_ratio)
+            eval_dataset = dataset_raw_train_test["test"]
+            train_dataset = dataset_raw_train_test["train"]
+            print("eval_dataset: ", eval_dataset)
+            print("train_dataset: ", train_dataset)
 
     return dict(train_dataset=train_dataset, eval_dataset=eval_dataset)
 
