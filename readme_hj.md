@@ -25,6 +25,8 @@ CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhang
 CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5
 
 CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.cli --model-path ./data/interim/vicuna-7b-lora-CQ-v0-1215/checkpoint-100
+
+CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.cli --model-path ./data/interim/vicuna-7b-lora-CQ-v0-1217-epoch50/checkpoint-1200
 ```
 
 # Train
