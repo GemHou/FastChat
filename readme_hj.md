@@ -71,8 +71,8 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
     --data_path ./data/raw/data_date121314_dataNum911.json \
     --dev_ratio 0.1 \
-    --output_dir ./data/interim/vicuna-7b-lora-CQ-v0-1219-epoch5-lr2em4 \
-    --run_name vicuna-7b-lora-CQ-v0-1219-epoch5-lr2em4 \
+    --output_dir ./data/interim/vicuna-7b-lora-CQ-v0-1219-epoch10-lr2em4 \
+    --run_name vicuna-7b-lora-CQ-v0-1219-epoch10-lr2em4 \
     --fp16 True \
     --tf32 True \
     --q_lora True \
@@ -85,7 +85,7 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --save_strategy "steps" \
     --save_steps 100 \
     --save_total_limit 10 \
-    --num_train_epochs 5 \
+    --num_train_epochs 10 \
     --lora_r 32 \
     --lora_alpha 16 \
     --lora_dropout 0.05 \
