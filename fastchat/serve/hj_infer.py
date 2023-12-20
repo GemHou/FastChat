@@ -36,6 +36,7 @@ from fastchat.modules.gptq import GptqConfig
 from fastchat.serve.inference import ChatIO, chat_loop
 from fastchat.utils import str_to_torch_dtype
 
+MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 
 class SimpleChatIO(ChatIO):
     def __init__(self, multiline: bool = False):
@@ -190,7 +191,7 @@ class ProgrammaticChatIO(ChatIO):
 
 
 def main(args):
-    args.model_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+    args.model_path = MODEL_PATH
 
     if args.gpus:
         if len(args.gpus.split(",")) < args.num_gpus:

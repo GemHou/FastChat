@@ -6,6 +6,7 @@ import re
 import sys
 from typing import Dict, List, Optional
 import warnings
+import time
 
 if sys.version_info >= (3, 9):
     from functools import cache
@@ -179,6 +180,8 @@ def load_model(
     revision: str = "main",
     debug: bool = False,
 ):
+    start_time = time.time()
+
     """Load a model from Hugging Face."""
     # get model adapter
     adapter = get_model_adapter(model_path)
@@ -341,6 +344,8 @@ def load_model(
 
     if debug:
         print(model)
+
+    print("load model time: ", time.time() - start_time)
 
     return model, tokenizer
 
