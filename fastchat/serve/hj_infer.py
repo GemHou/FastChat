@@ -48,9 +48,10 @@ from fastchat.utils import is_partial_stop, is_sentence_complete, get_context_le
 from fastchat.conversation import get_conv_template, SeparatorStyle
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
-TEMPERATURE = 0.7
+TEMPERATURE = 0.9
 
 def chat_loop_hj(
+    inp,
     model_path: str,
     device: str,
     num_gpus: int,
@@ -124,21 +125,23 @@ def chat_loop_hj(
     conv = None
 
     while True:
-        if not history or not conv:
-            conv = new_chat()
+        # if not history or not conv:
+        #     conv = new_chat()
+        print("resetting...")
+        conv = new_chat()
 
-        try:
-            inp = chatio.prompt_for_input(conv.roles[0])
-        except EOFError:
-            inp = ""
+        # try:
+        #     inp = chatio.prompt_for_input(conv.roles[0])
+        # except EOFError:
+        #     inp = ""
 
         if inp == "!!exit" or not inp:
             print("exit...")
             break
-        elif inp == "!!reset":
-            print("resetting...")
-            conv = new_chat()
-            continue
+        # elif inp == "!!reset":
+        #     print("resetting...")
+        #     conv = new_chat()
+        #     continue
         elif inp == "!!remove":
             print("removing last message...")
             if len(conv.messages) > conv.offset:
@@ -308,7 +311,9 @@ def main(args):
     else:
         raise ValueError(f"Invalid style for console: {args.style}")
     try:
+        inp = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料：角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。"
         chat_loop_hj(
+            inp,
             args.model_path,
             args.device,
             args.num_gpus,
