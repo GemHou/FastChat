@@ -16,7 +16,7 @@ def extract_qa_pairs(text_list):
     for text in text_list:
         # 使用正则表达式匹配问答对
         match_1 = re.match(r'(.+)(\n|\n\n)(.+)', text)
-        print("match_1: ", match_1)
+        # print("match_1: ", match_1)
         if match_1 is not None:
             match = match_1
         else:
