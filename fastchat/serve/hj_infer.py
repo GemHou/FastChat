@@ -30,6 +30,7 @@ import torch
 from typing import Iterable, Optional, Dict
 import json
 import time
+import tqdm
 
 from fastchat.model.model_adapter import add_model_args
 from fastchat.modules.awq import AWQConfig
@@ -48,9 +49,13 @@ from fastchat.utils import is_partial_stop, is_sentence_complete, get_context_le
 from fastchat.conversation import get_conv_template, SeparatorStyle
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
-TEMPERATURE = 0.9
+TEMPERATURE = 0.8
 CORPUS_LIST = ["角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。", 
-               "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，那么在战斗开始后，D会先开始对BOSS进行常规攻击，当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。"]
+            #    "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，",
+            #    "那么在战斗开始后，D会先开始对BOSS进行常规攻击，",
+            #    "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
+               "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
+               "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。"]
 
 def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, corpus):
     inp = inp_system + corpus
@@ -74,7 +79,7 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
         }
 
     try:
-        print("------------------------------------------------------------------------------------------")
+        # print("------------------------------------------------------------------------------------------")
         chatio.prompt_for_output(conv.roles[1])
         output_stream = generate_stream_func(
                 model,
@@ -98,10 +103,10 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
                     "speed (token/s)": round(num_tokens / duration, 2),
                 }
             print(f"\n{msg}\n")
-        print("duration: ", duration)
+        # print("duration: ", duration)
         num_tokens = len(tokenizer.encode(outputs))
-        print("speed (token/s): ", round(num_tokens / duration, 2))
-        print("------------------------------------------------------------------------------------------")
+        # print("speed (token/s): ", round(num_tokens / duration, 2))
+        # print("------------------------------------------------------------------------------------------")
 
     except KeyboardInterrupt:
         print("stopped generation.")
@@ -189,13 +194,17 @@ def chat_hj(
 
     conv = None
 
-    print("resetting...")
+    # print("resetting...")
     conv = new_chat()
 
     inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
-    for corpus in CORPUS_LIST:
-        outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, corpus)
-        print("outputs: ", outputs)
+    list_outputs = []
+    for str_corpus in tqdm.tqdm(CORPUS_LIST):
+        print("str_corpus: ", str_corpus)
+        str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, str_corpus)
+        # print("str_outputs: ", str_outputs)
+        list_outputs.append(str_outputs)
+    print("list_outputs: ", list_outputs)
 
 
 def main(args):
