@@ -129,68 +129,69 @@ def chat_hj(
     conv = new_chat()
 
     inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
-    inp_corpus = CORPUS_LIST[0]
-    inp = inp_system + inp_corpus
+    for inp_corpus in CORPUS_LIST:
+        inp = inp_system + inp_corpus
 
-    conv.append_message(conv.roles[0], inp)
-    conv.append_message(conv.roles[1], None)
-    prompt = conv.get_prompt()
+        conv.append_message(conv.roles[0], inp)
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
 
-    if is_codet5p:  # codet5p is a code completion model.
-        prompt = inp
+        if is_codet5p:  # codet5p is a code completion model.
+            prompt = inp
 
-    gen_params = {
-        "model": model_path,
-        "prompt": prompt,
-        "temperature": temperature,
-        "repetition_penalty": repetition_penalty,
-        "max_new_tokens": max_new_tokens,
-        "stop": conv.stop_str,
-        "stop_token_ids": conv.stop_token_ids,
-        "echo": False,
-    }
+        gen_params = {
+            "model": model_path,
+            "prompt": prompt,
+            "temperature": temperature,
+            "repetition_penalty": repetition_penalty,
+            "max_new_tokens": max_new_tokens,
+            "stop": conv.stop_str,
+            "stop_token_ids": conv.stop_token_ids,
+            "echo": False,
+        }
 
-    try:
-        print("------------------------------------------------------------------------------------------")
-        chatio.prompt_for_output(conv.roles[1])
-        output_stream = generate_stream_func(
-            model,
-            tokenizer,
-            gen_params,
-            device,
-            context_len=context_len,
-            judge_sent_end=judge_sent_end,
-        )
-        t = time.time()
-        outputs = chatio.stream_output(output_stream)
-        duration = time.time() - t
-        conv.update_last_message(outputs.strip())
+        try:
+            print("------------------------------------------------------------------------------------------")
+            chatio.prompt_for_output(conv.roles[1])
+            output_stream = generate_stream_func(
+                model,
+                tokenizer,
+                gen_params,
+                device,
+                context_len=context_len,
+                judge_sent_end=judge_sent_end,
+            )
+            t = time.time()
+            outputs = chatio.stream_output(output_stream)
+            duration = time.time() - t
+            conv.update_last_message(outputs.strip())
 
-        if debug:
+            if debug:
+                num_tokens = len(tokenizer.encode(outputs))
+                msg = {
+                    "conv_template": conv.name,
+                    "prompt": prompt,
+                    "outputs": outputs,
+                    "speed (token/s)": round(num_tokens / duration, 2),
+                }
+                print(f"\n{msg}\n")
+            print("duration: ", duration)
             num_tokens = len(tokenizer.encode(outputs))
-            msg = {
-                "conv_template": conv.name,
-                "prompt": prompt,
-                "outputs": outputs,
-                "speed (token/s)": round(num_tokens / duration, 2),
-            }
-            print(f"\n{msg}\n")
-        print("duration: ", duration)
-        num_tokens = len(tokenizer.encode(outputs))
-        print("speed (token/s): ", round(num_tokens / duration, 2))
-        print("------------------------------------------------------------------------------------------")
+            print("speed (token/s): ", round(num_tokens / duration, 2))
+            print("------------------------------------------------------------------------------------------")
 
-    except KeyboardInterrupt:
-        print("stopped generation.")
-        # If generation didn't finish
-        if conv.messages[-1][1] is None:
-            conv.messages.pop()
-            # Remove last user message, so there isn't a double up
-            if conv.messages[-1][0] == conv.roles[0]:
+        except KeyboardInterrupt:
+            print("stopped generation.")
+            # If generation didn't finish
+            if conv.messages[-1][1] is None:
                 conv.messages.pop()
+                # Remove last user message, so there isn't a double up
+                if conv.messages[-1][0] == conv.roles[0]:
+                    conv.messages.pop()
 
-            reload_conv(conv)
-    return outputs
+                reload_conv(conv)
+        
+        print("outputs: ", outputs)
 
 
 def main(args):
@@ -230,7 +231,7 @@ def main(args):
     else:
         raise ValueError(f"Invalid style for console: {args.style}")
     try:
-        outputs = chat_hj(
+        chat_hj(
             args.model_path,
             args.device,
             args.num_gpus,
@@ -262,7 +263,6 @@ def main(args):
             debug=args.debug,
             history=not args.no_history,
         )
-        print("outputs: ", outputs)
     except KeyboardInterrupt:
         print("exit...")
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--temperature", type=float, default=TEMPERATURE)
     parser.add_argument("--repetition_penalty", type=float, default=1.0)
-    parser.add_argument("--max-new-tokens", type=int, default=512)
+    parser.add_argument("--max-new-tokens", type=int, default=2048)
     parser.add_argument("--no-history", action="store_true")
     parser.add_argument(
         "--style",
