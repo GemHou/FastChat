@@ -48,7 +48,7 @@ CORPUS_LIST = [
     "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
     "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
     "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。",
-    ]
+]
 
 
 def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug,
@@ -233,17 +233,8 @@ def split_text_by_dot_and_semicolon(input_str):
     return sentences
 
 
-def main(args):
-    print("Loading...")
-    with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
-        str_full_corpus = file.read()  # 读取文件的全部内容
-        print("str_full_corpus: ", str_full_corpus)
-
-    list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
-    print("list_corpus: ", list_corpus)
-
+def corpus_2_strQa(args, list_corpus):
     args.model_path = MODEL_PATH
-
     if args.gpus:
         if len(args.gpus.split(",")) < args.num_gpus:
             raise ValueError(
@@ -277,47 +268,57 @@ def main(args):
         chatio = ProgrammaticChatIO()
     else:
         raise ValueError(f"Invalid style for console: {args.style}")
-    try:
-        list_outputs = chat_hj(
-            list_corpus,
-            args.model_path,
-            args.device,
-            args.num_gpus,
-            args.max_gpu_memory,
-            str_to_torch_dtype(args.dtype),
-            args.load_8bit,
-            args.cpu_offloading,
-            args.conv_template,
-            args.conv_system_msg,
-            args.temperature,
-            args.repetition_penalty,
-            args.max_new_tokens,
-            chatio,
-            gptq_config=GptqConfig(
-                ckpt=args.gptq_ckpt or args.model_path,
-                wbits=args.gptq_wbits,
-                groupsize=args.gptq_groupsize,
-                act_order=args.gptq_act_order,
-            ),
-            awq_config=AWQConfig(
-                ckpt=args.awq_ckpt or args.model_path,
-                wbits=args.awq_wbits,
-                groupsize=args.awq_groupsize,
-            ),
-            exllama_config=exllama_config,
-            xft_config=xft_config,
-            revision=args.revision,
-            judge_sent_end=args.judge_sent_end,
-            debug=args.debug,
-            history=not args.no_history,
-        )
-    except KeyboardInterrupt:
-        print("exit...")
+    list_str_qa = chat_hj(
+        list_corpus,
+        args.model_path,
+        args.device,
+        args.num_gpus,
+        args.max_gpu_memory,
+        str_to_torch_dtype(args.dtype),
+        args.load_8bit,
+        args.cpu_offloading,
+        args.conv_template,
+        args.conv_system_msg,
+        args.temperature,
+        args.repetition_penalty,
+        args.max_new_tokens,
+        chatio,
+        gptq_config=GptqConfig(
+            ckpt=args.gptq_ckpt or args.model_path,
+            wbits=args.gptq_wbits,
+            groupsize=args.gptq_groupsize,
+            act_order=args.gptq_act_order,
+        ),
+        awq_config=AWQConfig(
+            ckpt=args.awq_ckpt or args.model_path,
+            wbits=args.awq_wbits,
+            groupsize=args.awq_groupsize,
+        ),
+        exllama_config=exllama_config,
+        xft_config=xft_config,
+        revision=args.revision,
+        judge_sent_end=args.judge_sent_end,
+        debug=args.debug,
+        history=not args.no_history,
+    )
+    return list_str_qa
 
-    print("list_outputs: ", list_outputs)
-    qa_pairs = extract_qa_pairs(list_outputs)
-    print("qa_pairs: ", qa_pairs)
-    save_qa_pairs_to_json(qa_pairs, './data/interim/data_vicuna.json')
+
+def main(args):
+    print("Loading...")
+    with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
+        str_full_corpus = file.read()  # 读取文件的全部内容
+        print("str_full_corpus: ", str_full_corpus)
+
+    list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
+    print("list_corpus: ", list_corpus)
+
+    list_str_qa = corpus_2_strQa(args, list_corpus)
+
+    print("list_str_qa: ", list_str_qa)
+    list_qa = extract_qa_pairs(list_str_qa)
+    print("list_qa: ", list_qa)
+    save_qa_pairs_to_json(list_qa, './data/interim/data_vicuna.json')
 
 
 if __name__ == "__main__":
