@@ -313,12 +313,14 @@ def main(args):
     list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
     print("list_corpus: ", list_corpus)
 
-    list_str_qa = corpus_2_strQa(args, list_corpus)
+    list_qa = []
+    while True:
+        list_str_qa = corpus_2_strQa(args, list_corpus)
 
-    print("list_str_qa: ", list_str_qa)
-    list_qa = extract_qa_pairs(list_str_qa)
-    print("list_qa: ", list_qa)
-    save_qa_pairs_to_json(list_qa, './data/interim/data_vicuna.json')
+        print("list_str_qa: ", list_str_qa)
+        list_qa_temp = extract_qa_pairs(list_str_qa)
+        list_qa = list_qa + list_qa_temp
+        save_qa_pairs_to_json(list_qa, './data/interim/data_vicuna.json')
 
 
 if __name__ == "__main__":
