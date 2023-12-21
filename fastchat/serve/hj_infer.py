@@ -197,19 +197,18 @@ def chat_hj(
             chatio.prompt_for_output(message[0])
             chatio.print_output(message[1])
 
+    # print("resetting...")
+    conv = new_chat()
+
     inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
     list_outputs = []
     for str_corpus in tqdm.tqdm(list_corpus):
         print("str_corpus: ", str_corpus)
-        # print("resetting...")
-        conv = new_chat()
         str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, str_corpus)
         # print("str_outputs: ", str_outputs)
         list_outputs.append(str_outputs)
-    print("list_outputs: ", list_outputs)
-    qa_pairs = extract_qa_pairs(list_outputs)
-    print("qa_pairs: ", qa_pairs)
-    save_qa_pairs_to_json(qa_pairs, './data/interim/data_vicuna.json')
+
+    return list_outputs
 
 
 def split_text_by_dot_and_semicolon(input_str):
@@ -273,7 +272,7 @@ def main(args):
     else:
         raise ValueError(f"Invalid style for console: {args.style}")
     try:
-        chat_hj(
+        list_outputs = chat_hj(
             list_corpus,
             args.model_path,
             args.device,
@@ -308,6 +307,11 @@ def main(args):
         )
     except KeyboardInterrupt:
         print("exit...")
+
+    print("list_outputs: ", list_outputs)
+    qa_pairs = extract_qa_pairs(list_outputs)
+    print("qa_pairs: ", qa_pairs)
+    save_qa_pairs_to_json(qa_pairs, './data/interim/data_vicuna.json')
 
 
 if __name__ == "__main__":
