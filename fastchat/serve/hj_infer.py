@@ -125,6 +125,7 @@ def save_qa_pairs_to_json(qa_pairs, json_file_path):
 
 
 def chat_hj(
+    list_corpus,
     model_path: str,
     device: str,
     num_gpus: int,
@@ -147,6 +148,7 @@ def chat_hj(
     debug: bool = True,
     history: bool = True,
 ):
+
     # Model
     model, tokenizer = load_model(
         model_path,
@@ -202,7 +204,7 @@ def chat_hj(
 
     inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
     list_outputs = []
-    for str_corpus in tqdm.tqdm(CORPUS_LIST):
+    for str_corpus in tqdm.tqdm(list_corpus):
         print("str_corpus: ", str_corpus)
         str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, str_corpus)
         # print("str_outputs: ", str_outputs)
@@ -213,7 +215,31 @@ def chat_hj(
     save_qa_pairs_to_json(qa_pairs, './data/interim/data_vicuna.json')
 
 
+def split_text_by_dot_and_semicolon(input_str):
+    # 使用句号和分号进行切分
+    split_chars = ['。', '；']
+
+    # 替换分号，以便更容易切分
+    input_str = input_str.replace('；', '。')
+
+    # 根据句号切分文本
+    sentences = input_str.split('。')
+
+    # 去除空白项
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    return sentences
+
+
 def main(args):
+    print("Loading...")
+    with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
+        str_full_corpus = file.read()  # 读取文件的全部内容
+        print("str_full_corpus: ", str_full_corpus)
+
+    list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
+    print("list_corpus: ", list_corpus)
+
     args.model_path = MODEL_PATH
 
     if args.gpus:
@@ -251,6 +277,7 @@ def main(args):
         raise ValueError(f"Invalid style for console: {args.style}")
     try:
         chat_hj(
+            list_corpus,
             args.model_path,
             args.device,
             args.num_gpus,
