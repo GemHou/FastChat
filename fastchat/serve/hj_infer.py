@@ -15,20 +15,9 @@ Other commands:
 """
 import argparse
 import os
-import re
-import sys
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.key_binding import KeyBindings
-from rich.console import Console
-from rich.live import Live
-from rich.markdown import Markdown
 import torch
-from typing import Iterable, Optional, Dict
-import json
+from typing import Optional
 import time
 import tqdm
 
@@ -37,7 +26,8 @@ from fastchat.modules.awq import AWQConfig
 from fastchat.modules.exllama import ExllamaConfig
 from fastchat.modules.xfastertransformer import XftConfig
 from fastchat.modules.gptq import GptqConfig
-from fastchat.serve.inference import ChatIO, chat_loop
+from fastchat.serve.hj_extract_qa_pairs import extract_qa_pairs
+from fastchat.serve.inference import ChatIO
 from fastchat.utils import str_to_torch_dtype
 from fastchat.serve.cli import SimpleChatIO, RichChatIO, ProgrammaticChatIO
 from fastchat.model.model_adapter import (
@@ -45,8 +35,8 @@ from fastchat.model.model_adapter import (
     get_conversation_template,
     get_generate_stream_function,
 )
-from fastchat.utils import is_partial_stop, is_sentence_complete, get_context_length
-from fastchat.conversation import get_conv_template, SeparatorStyle
+from fastchat.utils import get_context_length
+from fastchat.conversation import get_conv_template
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 TEMPERATURE = 0.8
@@ -120,53 +110,6 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
 
             reload_conv(conv)
     return outputs
-
-
-def extract_qa_pairs(text_list):
-    qa_pairs = []
-    current_qa_pair = {"question": "", "answer": ""}
-
-    for text in text_list:
-        # 使用正则表达式匹配问答对
-        match_1 = re.match(r'(.+)\n(.+)', text)
-        print("match_1: ", match_1)
-        if match_1 is not None:
-            match = match_1
-            print("match_1.group[0]: ", match_1.group[0])
-            print("match_1.group[1]: ", match_1.group[1])
-            print("match_1.group[2]: ", match_1.group[2])
-            print("match_1.group[3]: ", match_1.group[3])
-        else:
-            match_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
-            print("match_2: ", match_2)
-
-            if match_2 is not None:
-
-                match = match_2
-                print("match_2.group: ", match_2.group)
-            else:
-                print("Fail text: ", text)
-                continue
-        if match:
-            # 将匹配的部分提取为问答对
-            question = match.group(2).strip()
-            answer = match.group(4).strip()
-
-            # 如果当前问答对不为空，添加到列表中
-            if current_qa_pair["question"] and current_qa_pair["answer"]:
-                qa_pairs.append(current_qa_pair)
-
-            # 更新当前问答对
-            current_qa_pair = {"question": question, "answer": answer}
-        else:
-            # 如果没有匹配到问答对，将文本追加到当前答案中
-            current_qa_pair["answer"] += "\n\n" + text.strip()
-
-    # 添加最后一个问答对
-    if current_qa_pair["question"] and current_qa_pair["answer"]:
-        qa_pairs.append(current_qa_pair)
-
-    return qa_pairs
 
 
 def chat_hj(
