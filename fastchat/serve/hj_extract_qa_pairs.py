@@ -22,24 +22,24 @@ def extract_qa_pairs(text_list):
         if match_1 is not None:
             match = match_1
             # print("match_1.group(0): ", match_1.group(0))
-            print("match_1.group(1): ", match_1.group(1))
-            print("match_1.group(2): ", match_1.group(2))
-            print("match_1.group(3): ", match_1.group(3))
+            # print("match_1.group(1): ", match_1.group(1))
+            # print("match_1.group(2): ", match_1.group(2))
+            # print("match_1.group(3): ", match_1.group(3))
         else:
             match_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
-            print("match_2: ", match_2)
+            # print("match_2: ", match_2)
 
             if match_2 is not None:
 
                 match = match_2
-                print("match_2.group: ", match_2.group)
+                # print("match_2.group: ", match_2.group)
             else:
                 print("Fail text: ", text)
                 continue
         if match:
             # 将匹配的部分提取为问答对
             question = match.group(1).strip()
-            question = remove_prefix(question, ["问：", "问题：", "Q："])
+            question = remove_prefix(question, ["问：", "问题：", "Q：", "1. "])
             answer = match.group(3).strip()
             answer = remove_prefix(answer, ["答：", "回答：", "A："])
 
