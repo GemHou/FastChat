@@ -21,6 +21,7 @@ from typing import Optional
 import time
 import tqdm
 import json
+import datetime
 
 from fastchat.model.model_adapter import add_model_args
 from fastchat.modules.awq import AWQConfig
@@ -304,6 +305,18 @@ def corpus_2_strQa(args, list_corpus):
     return list_str_qa
 
 
+def get_date():
+    # 获取当前时间
+    now = datetime.now()
+    # 提取月、日和小时
+    month = now.month
+    day = now.day
+    hour = now.hour
+    # 格式化成字符串，保证月、日、小时都是两位数
+    str_date = f"_date{month:02d}{day:02d}{hour:02d}"
+    return str_date
+
+
 def main(args):
     print("Loading...")
     with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
@@ -312,7 +325,7 @@ def main(args):
 
     list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
     print("list_corpus: ", list_corpus)
-
+    str_date = get_date()
     list_qa = []
     while True:
         list_str_qa = corpus_2_strQa(args, list_corpus)
@@ -320,7 +333,9 @@ def main(args):
         print("list_str_qa: ", list_str_qa)
         list_qa_temp = extract_qa_pairs(list_str_qa)
         list_qa = list_qa + list_qa_temp
-        save_qa_pairs_to_json(list_qa, './data/interim/data_vicuna.json')
+        str_data_num = "_dataNum" + str(len(list_qa))
+        output_file = './data/interim/data_vicuna' + str_date + str_data_num + '.json'
+        save_qa_pairs_to_json(list_qa, output_file)
 
 
 if __name__ == "__main__":
