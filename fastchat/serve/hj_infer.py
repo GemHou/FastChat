@@ -53,7 +53,6 @@ CORPUS_LIST = ["角色可以移动，用于规避伤害，或者到达指定地�
                "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，那么在战斗开始后，D会先开始对BOSS进行常规攻击，当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。"]
 
 def chat_hj(
-    inp,
     model_path: str,
     device: str,
     num_gpus: int,
@@ -128,6 +127,10 @@ def chat_hj(
 
     print("resetting...")
     conv = new_chat()
+
+    inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
+    inp_corpus = CORPUS_LIST[0]
+    inp = inp_system + inp_corpus
 
     conv.append_message(conv.roles[0], inp)
     conv.append_message(conv.roles[1], None)
@@ -227,11 +230,7 @@ def main(args):
     else:
         raise ValueError(f"Invalid style for console: {args.style}")
     try:
-        inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
-        inp_corpus = CORPUS_LIST[0]
-        inp = inp_system + inp_corpus
         outputs = chat_hj(
-            inp,
             args.model_path,
             args.device,
             args.num_gpus,
