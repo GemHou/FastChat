@@ -52,7 +52,7 @@ TEMPERATURE = 0.9
 CORPUS_LIST = ["角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。", 
                "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，那么在战斗开始后，D会先开始对BOSS进行常规攻击，当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。"]
 
-def chat_loop_hj(
+def chat_hj(
     inp,
     model_path: str,
     device: str,
@@ -126,159 +126,68 @@ def chat_loop_hj(
 
     conv = None
 
-    while True:
-        # if not history or not conv:
-        #     conv = new_chat()
-        print("resetting...")
-        conv = new_chat()
+    print("resetting...")
+    conv = new_chat()
 
-        # try:
-        #     inp = chatio.prompt_for_input(conv.roles[0])
-        # except EOFError:
-        #     inp = ""
+    conv.append_message(conv.roles[0], inp)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
 
-        if inp == "!!exit" or not inp:
-            print("exit...")
-            break
-        # elif inp == "!!reset":
-        #     print("resetting...")
-        #     conv = new_chat()
-        #     continue
-        elif inp == "!!remove":
-            print("removing last message...")
-            if len(conv.messages) > conv.offset:
-                # Assistant
-                if conv.messages[-1][0] == conv.roles[1]:
-                    conv.messages.pop()
-                # User
-                if conv.messages[-1][0] == conv.roles[0]:
-                    conv.messages.pop()
-                reload_conv(conv)
-            else:
-                print("No messages to remove.")
-            continue
-        elif inp == "!!regen":
-            print("regenerating last message...")
-            if len(conv.messages) > conv.offset:
-                # Assistant
-                if conv.messages[-1][0] == conv.roles[1]:
-                    conv.messages.pop()
-                # User
-                if conv.messages[-1][0] == conv.roles[0]:
-                    reload_conv(conv)
-                    # Set inp to previous message
-                    inp = conv.messages.pop()[1]
-                else:
-                    # Shouldn't happen in normal circumstances
-                    print("No user message to regenerate from.")
-                    continue
-            else:
-                print("No messages to regenerate.")
-                continue
-        elif inp.startswith("!!save"):
-            args = inp.split(" ", 1)
+    if is_codet5p:  # codet5p is a code completion model.
+        prompt = inp
 
-            if len(args) != 2:
-                print("usage: !!save <filename>")
-                continue
-            else:
-                filename = args[1]
+    gen_params = {
+        "model": model_path,
+        "prompt": prompt,
+        "temperature": temperature,
+        "repetition_penalty": repetition_penalty,
+        "max_new_tokens": max_new_tokens,
+        "stop": conv.stop_str,
+        "stop_token_ids": conv.stop_token_ids,
+        "echo": False,
+    }
 
-            # Add .json if extension not present
-            if not "." in filename:
-                filename += ".json"
+    try:
+        print("------------------------------------------------------------------------------------------")
+        chatio.prompt_for_output(conv.roles[1])
+        output_stream = generate_stream_func(
+            model,
+            tokenizer,
+            gen_params,
+            device,
+            context_len=context_len,
+            judge_sent_end=judge_sent_end,
+        )
+        t = time.time()
+        outputs = chatio.stream_output(output_stream)
+        duration = time.time() - t
+        conv.update_last_message(outputs.strip())
 
-            print("saving...", filename)
-            with open(filename, "w") as outfile:
-                json.dump(conv.dict(), outfile)
-            continue
-        elif inp.startswith("!!load"):
-            args = inp.split(" ", 1)
-
-            if len(args) != 2:
-                print("usage: !!load <filename>")
-                continue
-            else:
-                filename = args[1]
-
-            # Check if file exists and add .json if needed
-            if not os.path.exists(filename):
-                if (not filename.endswith(".json")) and os.path.exists(
-                    filename + ".json"
-                ):
-                    filename += ".json"
-                else:
-                    print("file not found:", filename)
-                    continue
-
-            print("loading...", filename)
-            with open(filename, "r") as infile:
-                new_conv = json.load(infile)
-
-            conv = get_conv_template(new_conv["template_name"])
-            conv.set_system_message(new_conv["system_message"])
-            conv.messages = new_conv["messages"]
-            reload_conv(conv)
-            continue
-
-        conv.append_message(conv.roles[0], inp)
-        conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
-
-        if is_codet5p:  # codet5p is a code completion model.
-            prompt = inp
-
-        gen_params = {
-            "model": model_path,
-            "prompt": prompt,
-            "temperature": temperature,
-            "repetition_penalty": repetition_penalty,
-            "max_new_tokens": max_new_tokens,
-            "stop": conv.stop_str,
-            "stop_token_ids": conv.stop_token_ids,
-            "echo": False,
-        }
-
-        try:
-            print("------------------------------------------------------------------------------------------")
-            chatio.prompt_for_output(conv.roles[1])
-            output_stream = generate_stream_func(
-                model,
-                tokenizer,
-                gen_params,
-                device,
-                context_len=context_len,
-                judge_sent_end=judge_sent_end,
-            )
-            t = time.time()
-            outputs = chatio.stream_output(output_stream)
-            duration = time.time() - t
-            conv.update_last_message(outputs.strip())
-
-            if debug:
-                num_tokens = len(tokenizer.encode(outputs))
-                msg = {
-                    "conv_template": conv.name,
-                    "prompt": prompt,
-                    "outputs": outputs,
-                    "speed (token/s)": round(num_tokens / duration, 2),
-                }
-                print(f"\n{msg}\n")
-            print("duration: ", duration)
+        if debug:
             num_tokens = len(tokenizer.encode(outputs))
-            print("speed (token/s): ", round(num_tokens / duration, 2))
-            print("------------------------------------------------------------------------------------------")
+            msg = {
+                "conv_template": conv.name,
+                "prompt": prompt,
+                "outputs": outputs,
+                "speed (token/s)": round(num_tokens / duration, 2),
+            }
+            print(f"\n{msg}\n")
+        print("duration: ", duration)
+        num_tokens = len(tokenizer.encode(outputs))
+        print("speed (token/s): ", round(num_tokens / duration, 2))
+        print("------------------------------------------------------------------------------------------")
 
-        except KeyboardInterrupt:
-            print("stopped generation.")
-            # If generation didn't finish
-            if conv.messages[-1][1] is None:
+    except KeyboardInterrupt:
+        print("stopped generation.")
+        # If generation didn't finish
+        if conv.messages[-1][1] is None:
+            conv.messages.pop()
+            # Remove last user message, so there isn't a double up
+            if conv.messages[-1][0] == conv.roles[0]:
                 conv.messages.pop()
-                # Remove last user message, so there isn't a double up
-                if conv.messages[-1][0] == conv.roles[0]:
-                    conv.messages.pop()
 
-                reload_conv(conv)
+            reload_conv(conv)
+    return outputs
 
 
 def main(args):
@@ -321,7 +230,7 @@ def main(args):
         inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
         inp_corpus = CORPUS_LIST[0]
         inp = inp_system + inp_corpus
-        chat_loop_hj(
+        outputs = chat_hj(
             inp,
             args.model_path,
             args.device,
@@ -354,6 +263,7 @@ def main(args):
             debug=args.debug,
             history=not args.no_history,
         )
+        print("outputs: ", outputs)
     except KeyboardInterrupt:
         print("exit...")
 
