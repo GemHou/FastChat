@@ -54,8 +54,9 @@ CORPUS_LIST = ["角色可以移动，用于规避伤害，或者到达指定地�
             #    "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，",
             #    "那么在战斗开始后，D会先开始对BOSS进行常规攻击，",
             #    "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
-               "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
-               "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。"]
+            #    "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
+            #    "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。",
+               ]
 
 def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, corpus):
     inp = inp_system + corpus
@@ -119,6 +120,53 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
 
             reload_conv(conv)
     return outputs
+
+
+def extract_qa_pairs(text_list):
+    qa_pairs = []
+    current_qa_pair = {"question": "", "answer": ""}
+
+    for text in text_list:
+        # 使用正则表达式匹配问答对
+        match_1 = re.match(r'(.+)\n(.+)', text)
+        print("match_1: ", match_1)
+        if match_1 is not None:
+            match = match_1
+            print("match_1.group[0]: ", match_1.group[0])
+            print("match_1.group[1]: ", match_1.group[1])
+            print("match_1.group[2]: ", match_1.group[2])
+            print("match_1.group[3]: ", match_1.group[3])
+        else:
+            match_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
+            print("match_2: ", match_2)
+
+            if match_2 is not None:
+
+                match = match_2
+                print("match_2.group: ", match_2.group)
+            else:
+                print("Fail text: ", text)
+                continue
+        if match:
+            # 将匹配的部分提取为问答对
+            question = match.group(2).strip()
+            answer = match.group(4).strip()
+
+            # 如果当前问答对不为空，添加到列表中
+            if current_qa_pair["question"] and current_qa_pair["answer"]:
+                qa_pairs.append(current_qa_pair)
+
+            # 更新当前问答对
+            current_qa_pair = {"question": question, "answer": answer}
+        else:
+            # 如果没有匹配到问答对，将文本追加到当前答案中
+            current_qa_pair["answer"] += "\n\n" + text.strip()
+
+    # 添加最后一个问答对
+    if current_qa_pair["question"] and current_qa_pair["answer"]:
+        qa_pairs.append(current_qa_pair)
+
+    return qa_pairs
 
 
 def chat_hj(
@@ -205,6 +253,8 @@ def chat_hj(
         # print("str_outputs: ", str_outputs)
         list_outputs.append(str_outputs)
     print("list_outputs: ", list_outputs)
+    qa_pairs = extract_qa_pairs(list_outputs)
+    print("qa_pairs: ", qa_pairs)
 
 
 def main(args):
