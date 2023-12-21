@@ -2,8 +2,6 @@ import re
 
 
 def remove_prefix(input_str, prefixes):
-    # prefixes = ["问：", "问题：", "A："]
-
     for prefix in prefixes:
         if input_str.startswith(prefix):
             return input_str[len(prefix):]
@@ -21,18 +19,12 @@ def extract_qa_pairs(text_list):
         print("match_1: ", match_1)
         if match_1 is not None:
             match = match_1
-            # print("match_1.group(0): ", match_1.group(0))
-            # print("match_1.group(1): ", match_1.group(1))
-            # print("match_1.group(2): ", match_1.group(2))
-            # print("match_1.group(3): ", match_1.group(3))
         else:
             match_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
-            # print("match_2: ", match_2)
 
             if match_2 is not None:
 
                 match = match_2
-                # print("match_2.group: ", match_2.group)
             else:
                 print("Fail text: ", text)
                 continue

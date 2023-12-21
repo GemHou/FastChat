@@ -41,15 +41,19 @@ from fastchat.conversation import get_conv_template
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 TEMPERATURE = 0.8
-CORPUS_LIST = ["角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。", 
-               "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，",
-               "那么在战斗开始后，D会先开始对BOSS进行常规攻击，",
-               "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
-               "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
-               "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。",
-               ]
+CORPUS_LIST = [
+    "角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。",
+    "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，",
+    "那么在战斗开始后，D会先开始对BOSS进行常规攻击，",
+    "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
+    "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
+    "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。",
+    ]
 
-def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, corpus):
+
+def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug,
+                     model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system,
+                     corpus):
     inp = inp_system + corpus
 
     conv.append_message(conv.roles[0], inp)
@@ -60,27 +64,27 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
         prompt = inp
 
     gen_params = {
-            "model": model_path,
-            "prompt": prompt,
-            "temperature": temperature,
-            "repetition_penalty": repetition_penalty,
-            "max_new_tokens": max_new_tokens,
-            "stop": conv.stop_str,
-            "stop_token_ids": conv.stop_token_ids,
-            "echo": False,
-        }
+        "model": model_path,
+        "prompt": prompt,
+        "temperature": temperature,
+        "repetition_penalty": repetition_penalty,
+        "max_new_tokens": max_new_tokens,
+        "stop": conv.stop_str,
+        "stop_token_ids": conv.stop_token_ids,
+        "echo": False,
+    }
 
     try:
         # print("------------------------------------------------------------------------------------------")
         chatio.prompt_for_output(conv.roles[1])
         output_stream = generate_stream_func(
-                model,
-                tokenizer,
-                gen_params,
-                device,
-                context_len=context_len,
-                judge_sent_end=judge_sent_end,
-            )
+            model,
+            tokenizer,
+            gen_params,
+            device,
+            context_len=context_len,
+            judge_sent_end=judge_sent_end,
+        )
         t = time.time()
         outputs = chatio.stream_output(output_stream)
         duration = time.time() - t
@@ -89,11 +93,11 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
         if debug:
             num_tokens = len(tokenizer.encode(outputs))
             msg = {
-                    "conv_template": conv.name,
-                    "prompt": prompt,
-                    "outputs": outputs,
-                    "speed (token/s)": round(num_tokens / duration, 2),
-                }
+                "conv_template": conv.name,
+                "prompt": prompt,
+                "outputs": outputs,
+                "speed (token/s)": round(num_tokens / duration, 2),
+            }
             print(f"\n{msg}\n")
         # print("duration: ", duration)
         num_tokens = len(tokenizer.encode(outputs))
@@ -102,15 +106,16 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
 
     except KeyboardInterrupt:
         print("stopped generation.")
-            # If generation didn't finish
+        # If generation didn't finish
         if conv.messages[-1][1] is None:
             conv.messages.pop()
-                # Remove last user message, so there isn't a double up
+            # Remove last user message, so there isn't a double up
             if conv.messages[-1][0] == conv.roles[0]:
                 conv.messages.pop()
 
             reload_conv(conv)
     return outputs
+
 
 def save_qa_pairs_to_json(qa_pairs, json_file_path):
     data = []
@@ -125,30 +130,29 @@ def save_qa_pairs_to_json(qa_pairs, json_file_path):
 
 
 def chat_hj(
-    list_corpus,
-    model_path: str,
-    device: str,
-    num_gpus: int,
-    max_gpu_memory: str,
-    dtype: Optional[torch.dtype],
-    load_8bit: bool,
-    cpu_offloading: bool,
-    conv_template: Optional[str],
-    conv_system_msg: Optional[str],
-    temperature: float,
-    repetition_penalty: float,
-    max_new_tokens: int,
-    chatio: ChatIO,
-    gptq_config: Optional[GptqConfig] = None,
-    awq_config: Optional[AWQConfig] = None,
-    exllama_config: Optional[ExllamaConfig] = None,
-    xft_config: Optional[XftConfig] = None,
-    revision: str = "main",
-    judge_sent_end: bool = True,
-    debug: bool = True,
-    history: bool = True,
+        list_corpus,
+        model_path: str,
+        device: str,
+        num_gpus: int,
+        max_gpu_memory: str,
+        dtype: Optional[torch.dtype],
+        load_8bit: bool,
+        cpu_offloading: bool,
+        conv_template: Optional[str],
+        conv_system_msg: Optional[str],
+        temperature: float,
+        repetition_penalty: float,
+        max_new_tokens: int,
+        chatio: ChatIO,
+        gptq_config: Optional[GptqConfig] = None,
+        awq_config: Optional[AWQConfig] = None,
+        exllama_config: Optional[ExllamaConfig] = None,
+        xft_config: Optional[XftConfig] = None,
+        revision: str = "main",
+        judge_sent_end: bool = True,
+        debug: bool = True,
+        history: bool = True,
 ):
-
     # Model
     model, tokenizer = load_model(
         model_path,
@@ -193,7 +197,7 @@ def chat_hj(
         """
         Reprints the conversation from the start.
         """
-        for message in conv.messages[conv.offset :]:
+        for message in conv.messages[conv.offset:]:
             chatio.prompt_for_output(message[0])
             chatio.print_output(message[1])
 
@@ -204,7 +208,9 @@ def chat_hj(
     list_outputs = []
     for str_corpus in tqdm.tqdm(list_corpus):
         print("str_corpus: ", str_corpus)
-        str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p, context_len, reload_conv, conv, inp_system, str_corpus)
+        str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio,
+                                       judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p,
+                                       context_len, reload_conv, conv, inp_system, str_corpus)
         # print("str_outputs: ", str_outputs)
         list_outputs.append(str_outputs)
 
