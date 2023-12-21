@@ -238,6 +238,7 @@ def chat_loop_hj(
         }
 
         try:
+            print("------------------------------------------------------------------------------------------")
             chatio.prompt_for_output(conv.roles[1])
             output_stream = generate_stream_func(
                 model,
@@ -261,6 +262,10 @@ def chat_loop_hj(
                     "speed (token/s)": round(num_tokens / duration, 2),
                 }
                 print(f"\n{msg}\n")
+            print("duration: ", duration)
+            num_tokens = len(tokenizer.encode(outputs))
+            print("speed (token/s): ", round(num_tokens / duration, 2))
+            print("------------------------------------------------------------------------------------------")
 
         except KeyboardInterrupt:
             print("stopped generation.")
