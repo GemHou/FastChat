@@ -20,6 +20,7 @@ import torch
 from typing import Optional
 import time
 import tqdm
+import json
 
 from fastchat.model.model_adapter import add_model_args
 from fastchat.modules.awq import AWQConfig
@@ -111,6 +112,17 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
             reload_conv(conv)
     return outputs
 
+def save_qa_pairs_to_json(qa_pairs, json_file_path):
+    data = []
+    for idx, qa_pair in enumerate(qa_pairs):
+        human_msg = {"from": "human", "value": qa_pair["question"]}
+        gpt_msg = {"from": "gpt", "value": qa_pair["answer"]}
+        conversation_data = {"id": f"identity_{idx}", "conversations": [human_msg, gpt_msg]}
+        data.append(conversation_data)
+
+    with open(json_file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=2)
+
 
 def chat_hj(
     model_path: str,
@@ -198,6 +210,7 @@ def chat_hj(
     print("list_outputs: ", list_outputs)
     qa_pairs = extract_qa_pairs(list_outputs)
     print("qa_pairs: ", qa_pairs)
+    save_qa_pairs_to_json(qa_pairs, './data/interim/data_vicuna.json')
 
 
 def main(args):
