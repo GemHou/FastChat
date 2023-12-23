@@ -321,16 +321,16 @@ def main(args):
     print("Loading...")
     with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
         str_full_corpus = file.read()  # 读取文件的全部内容
-        print("str_full_corpus: ", str_full_corpus)
+        # print("str_full_corpus: ", str_full_corpus)
 
     list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
-    print("list_corpus: ", list_corpus)
+    # print("list_corpus: ", list_corpus)
     str_date = get_date()
     list_qa = []
     while True:
         list_str_qa = corpus_2_strQa(args, list_corpus)
 
-        print("list_str_qa: ", list_str_qa)
+        # print("list_str_qa: ", list_str_qa)
         list_qa_temp = extract_qa_pairs(list_str_qa)
         list_qa = list_qa + list_qa_temp
         str_data_num = "_dataNum" + str(len(list_qa))
