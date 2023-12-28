@@ -205,7 +205,7 @@ def chat_hj(
     # print("resetting...")
     conv = new_chat()
 
-    inp_system = "基于以下语料，尝试生成1个问题和回答，整理成问答格式。语料："
+    inp_system = "基于以下语料，尝试生成1个尽可能简洁的注意细节的问题和回答，整理成问答格式。语料："
     list_outputs = []
     for str_corpus in tqdm.tqdm(list_corpus):
         print("str_corpus: ", str_corpus)
@@ -334,7 +334,7 @@ def main(args):
         list_qa_temp = extract_qa_pairs(list_str_qa)
         list_qa = list_qa + list_qa_temp
         str_data_num = "_dataNum" + str(len(list_qa))
-        output_file = './data/interim/data_vicuna' + str_date + str_data_num + '.json'
+        output_file = './data/interim/data_vicuna' + str_date + '/data_vicuna' + str_date + str_data_num + '.json'
         save_qa_pairs_to_json(list_qa, output_file)
 
 
