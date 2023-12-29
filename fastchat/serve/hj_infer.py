@@ -42,14 +42,7 @@ from fastchat.conversation import get_conv_template
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 TEMPERATURE = 0.8
-# CORPUS_LIST = [
-#     "角色可以移动，用于规避伤害，或者到达指定地点执行战术；例如：当BOSS释放一个具有高威胁的大范围伤害技能时，角色需要走到安全位置，等待伤害技能结束，避免受到大量伤害，然后回到输出位置进行攻击；例如：当BOSS战中，BOSS触发了一些机制，角色需要移动到指定机关旁，与机关交互，才能继续正常攻略BOSS。",
-#     "D角色是个辅助倾向的角色，拥有减少受到伤害的技能硬化术，拥有范围内治疗队友的技能回春图腾，拥有降低目标防御力的技能脆弱术，",
-#     "那么在战斗开始后，D会先开始对BOSS进行常规攻击，",
-#     "当多名队友受到攻击，治疗倾向角色技能还在CD的时候，D会释放回春图腾，用来临时补充当作一个治疗倾向的角色，为队伍提供治疗，",
-#     "当坦克倾向的角色生命垂危，治疗角色还在治疗其他人时，D会对坦克角色释放硬化术，为坦克角色提供更多的减伤能力，增加存活几率，",
-#     "当全队开始对BOSS进行输出的时候，D会对BOSS释放脆弱术，使得全团的成员在攻击BOSS时候获得更大的收益，提升团队输出。",
-# ]
+INPUT_FILE_NAME = './data/raw/corpus_20231228_human.txt'  # None
 
 
 def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio, judge_sent_end, debug,
@@ -205,7 +198,7 @@ def chat_hj(
     # print("resetting...")
     conv = new_chat()
 
-    inp_system = "基于以下语料，尝试生成1个尽可能简洁的注意细节的问题和回答，整理成问答格式。语料："
+    inp_system = "基于以下语料，尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料："
     list_outputs = []
     for str_corpus in tqdm.tqdm(list_corpus):
         print("str_corpus: ", str_corpus)
@@ -319,7 +312,11 @@ def get_date():
 
 def main(args):
     print("Loading...")
-    with open('./data/raw/corpus.txt', 'r', encoding='utf-8') as file:
+    if INPUT_FILE_NAME is None:
+        input_file_name = './data/raw/corpus.txt'
+    else:
+        input_file_name = INPUT_FILE_NAME
+    with open(input_file_name, 'r', encoding='utf-8') as file:
         str_full_corpus = file.read()  # 读取文件的全部内容
         # print("str_full_corpus: ", str_full_corpus)
 
@@ -334,7 +331,7 @@ def main(args):
         list_qa_temp = extract_qa_pairs(list_str_qa)
         list_qa = list_qa + list_qa_temp
         str_data_num = "_dataNum" + str(len(list_qa))
-        output_file = './data/interim/data_vicuna' + str_date + '/data_vicuna' + str_date + str_data_num + '.json'
+        output_file = './data/interim/data_vicuna' + '/data_vicuna' + str_date + str_data_num + '.json'
         save_qa_pairs_to_json(list_qa, output_file)
 
 
