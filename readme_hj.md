@@ -30,12 +30,15 @@ CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 
 CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-7b-lora-CQ-v0-1219-epoch10-lr2em4-vdata1543/checkpoint-400
 
-CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata8196/checkpoint-1400
+CUDA_VISIBLE_DEVICES=3 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch20-lr2em4-vdata8196-evalGPT/checkpoint-1700
+
+CUDA_VISIBLE_DEVICES=0 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch20-lr2em4-vdata8196-evalGPT/checkpoint-800
 ```
 
 # Collect data
 ```bash
-CUDA_VISIBLE_DEVICES=6 nohup python fastchat/serve/hj_infer.py > ./data/interim/no_hup_hj_infer.log 2>&1 &
+CUDA_VISIBLE_DEVICES=6 nohup python fastchat/serve/hj_infer.py \
+    > ./data/interim/nohup_hj_infer.log 2>&1 &
 ```
 
 # Train
@@ -144,12 +147,12 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
 
 zhangqi python hjPara splitData backgroundData largeLearningRate newData 13B:
 ```bash
-CUDA_VISIBLE_DEVICES=7 python fastchat/train/train_lora.py \
+CUDA_VISIBLE_DEVICES=0 nohup python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
-    --data_path ./data/interim/data_vicuna_date122116_dataNum8196.json \
+    --data_path ./data/interim/data_vicuna/data_vicuna_date122816_dataNum1164.json \
     --dev_ratio 0.1 \
-    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata8196 \
-    --run_name vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata8196 \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata1164 \
+    --run_name vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata1164 \
     --fp16 True \
     --tf32 True \
     --q_lora True \
@@ -160,7 +163,7 @@ CUDA_VISIBLE_DEVICES=7 python fastchat/train/train_lora.py \
     --evaluation_strategy "steps" \
     --eval_steps 20  \
     --save_strategy "steps" \
-    --save_steps 100 \
+    --save_steps 200 \
     --save_total_limit 10 \
     --num_train_epochs 10 \
     --lora_r 32 \
@@ -173,7 +176,8 @@ CUDA_VISIBLE_DEVICES=7 python fastchat/train/train_lora.py \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --logging_steps 1 \
-    --model_max_length 2048
+    --model_max_length 2048 \
+    > ./data/interim/nohup_train_lora_epoch10_vdata1164.log 2>&1 &
 ```
 
 zhangqi python hjPara splitData backgroundData largeLearningRate newData 13B evalGPT:
@@ -194,7 +198,7 @@ CUDA_VISIBLE_DEVICES=7 nohup python fastchat/train/train_lora.py \
     --evaluation_strategy "steps" \
     --eval_steps 20  \
     --save_strategy "steps" \
-    --save_steps 100 \
+    --save_steps 200 \
     --save_total_limit 10 \
     --num_train_epochs 20 \
     --lora_r 32 \
