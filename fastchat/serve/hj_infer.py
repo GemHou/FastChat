@@ -324,7 +324,8 @@ def main(args):
     # print("list_corpus: ", list_corpus)
     str_date = get_date()
     list_qa = []
-    while True:
+    start_time = time.time()
+    while time.time() - start_time < 60 * 60 * 24 * 3:
         list_str_qa = corpus_2_strQa(args, list_corpus)
 
         # print("list_str_qa: ", list_str_qa)

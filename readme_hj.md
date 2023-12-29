@@ -33,6 +33,11 @@ CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata8196/checkpoint-1400
 ```
 
+# Collect data
+```bash
+CUDA_VISIBLE_DEVICES=6 nohup python fastchat/serve/hj_infer.py > ./data/interim/no_hup_hj_infer.log 2>&1 &
+```
+
 # Train
 
 zhangqi python hjPara splitData backgroundData:
