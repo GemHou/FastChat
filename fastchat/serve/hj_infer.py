@@ -109,6 +109,7 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
                 conv.messages.pop()
 
             reload_conv(conv)
+        outputs = None
     return outputs
 
 
