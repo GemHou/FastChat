@@ -39,9 +39,10 @@ from fastchat.model.model_adapter import (
 )
 from fastchat.utils import get_context_length
 from fastchat.conversation import get_conv_template
+import random
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
-TEMPERATURE = 0.8
+# TEMPERATURE = 0.8
 INPUT_FILE_NAME = './data/raw/corpus_20231228_human.txt'  # None
 
 
@@ -134,7 +135,7 @@ def chat_hj(
         cpu_offloading: bool,
         conv_template: Optional[str],
         conv_system_msg: Optional[str],
-        temperature: float,
+        # temperature: float,
         repetition_penalty: float,
         max_new_tokens: int,
         chatio: ChatIO,
@@ -203,6 +204,7 @@ def chat_hj(
     for str_corpus in tqdm.tqdm(list_corpus):
         print(" ")
         print("str_corpus: ", str_corpus)
+        temperature = 0.7 + random.random() * 0.2
         str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio,
                                        judge_sent_end, debug, model, tokenizer, generate_stream_func, is_codet5p,
                                        context_len, reload_conv, conv, inp_system, str_corpus)
@@ -274,7 +276,7 @@ def corpus_2_strQa(args, list_corpus):
         args.cpu_offloading,
         args.conv_template,
         args.conv_system_msg,
-        args.temperature,
+        # args.temperature,
         args.repetition_penalty,
         args.max_new_tokens,
         chatio,
@@ -346,7 +348,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--conv-system-msg", type=str, default=None, help="Conversation system message."
     )
-    parser.add_argument("--temperature", type=float, default=TEMPERATURE)
+    # parser.add_argument("--temperature", type=float, default=TEMPERATURE)
     parser.add_argument("--repetition_penalty", type=float, default=1.0)
     parser.add_argument("--max-new-tokens", type=int, default=2048)
     parser.add_argument("--no-history", action="store_true")
