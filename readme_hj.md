@@ -16,9 +16,6 @@ python -m bitsandbytes
 
 remove (comment) the bitsandbytes code in /mnt/nfs/envs_hj/envs/FASTCHAT/lib/python3.9/site-packages/peft/tuners/lora/model.py manually!!!
 
-# Infer
-CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_infer
-
 # Eval
 ```bash
 conda activate XXX

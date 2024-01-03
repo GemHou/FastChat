@@ -69,47 +69,47 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
         "echo": False,
     }
 
-    try:
+    # try:
         # print("------------------------------------------------------------------------------------------")
-        chatio.prompt_for_output(conv.roles[1])
-        output_stream = generate_stream_func(
-            model,
-            tokenizer,
-            gen_params,
-            device,
-            context_len=context_len,
-            judge_sent_end=judge_sent_end,
-        )
-        t = time.time()
-        outputs = chatio.stream_output(output_stream)
-        duration = time.time() - t
-        conv.update_last_message(outputs.strip())
+    chatio.prompt_for_output(conv.roles[1])
+    output_stream = generate_stream_func(
+        model,
+        tokenizer,
+        gen_params,
+        device,
+        context_len=context_len,
+        judge_sent_end=judge_sent_end,
+    )
+    t = time.time()
+    outputs = chatio.stream_output(output_stream)
+    duration = time.time() - t
+    conv.update_last_message(outputs.strip())
 
-        if debug:
-            num_tokens = len(tokenizer.encode(outputs))
-            msg = {
-                "conv_template": conv.name,
-                "prompt": prompt,
-                "outputs": outputs,
-                "speed (token/s)": round(num_tokens / duration, 2),
-            }
-            print(f"\n{msg}\n")
-        # print("duration: ", duration)
+    if debug:
         num_tokens = len(tokenizer.encode(outputs))
-        # print("speed (token/s): ", round(num_tokens / duration, 2))
-        # print("------------------------------------------------------------------------------------------")
+        msg = {
+            "conv_template": conv.name,
+            "prompt": prompt,
+            "outputs": outputs,
+            "speed (token/s)": round(num_tokens / duration, 2),
+        }
+        print(f"\n{msg}\n")
+    # print("duration: ", duration)
+    num_tokens = len(tokenizer.encode(outputs))
+    # print("speed (token/s): ", round(num_tokens / duration, 2))
+    # print("------------------------------------------------------------------------------------------")
 
-    except KeyboardInterrupt:
-        print("stopped generation.")
-        # If generation didn't finish
-        if conv.messages[-1][1] is None:
-            conv.messages.pop()
-            # Remove last user message, so there isn't a double up
-            if conv.messages[-1][0] == conv.roles[0]:
-                conv.messages.pop()
+    # except KeyboardInterrupt:
+    #     print("stopped generation.")
+    #     # If generation didn't finish
+    #     if conv.messages[-1][1] is None:
+    #         conv.messages.pop()
+    #         # Remove last user message, so there isn't a double up
+    #         if conv.messages[-1][0] == conv.roles[0]:
+    #             conv.messages.pop()
 
-            reload_conv(conv)
-        outputs = None
+    #         reload_conv(conv)
+    #     outputs = None
     return outputs
 
 
@@ -202,8 +202,36 @@ def chat_hj(
 
     inp_system = "基于以下语料，尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料："
     list_outputs = []
-    for str_corpus in tqdm.tqdm(list_corpus):
+    for corpus_i in tqdm.tqdm(range(len(list_corpus)*4)):
         print(" ")
+        probability = random.random()
+        if probability < 1/4:
+            print("corpus 1")
+            # str_corpus = list_corpus[corpus_i]
+            str_corpus = random.choice(list_corpus)
+        elif probability < 2/4:
+            print("corpus 2")
+            # 生成一个随机的起始索引
+            start_index = random.randint(0, len(list_corpus) - 2)
+
+            # 选择起始索引和它后续的元素，共两个元素
+            random_elements = list_corpus[start_index:start_index + 2]
+            random.shuffle(random_elements)
+            str_corpus = random_elements[0] + "。" + random_elements[1]
+        elif probability < 3/4:
+            print("corpus 3")
+            # 生成一个随机的起始索引
+            start_index = random.randint(0, len(list_corpus) - 3)
+
+            # 选择起始索引和它后续的元素，共两个元素
+            random_elements = list_corpus[start_index:start_index + 3]
+            random.shuffle(random_elements)
+            str_corpus = random_elements[0] + "。" + random_elements[1] + "。" + random_elements[2]
+        else:
+            print("corpus 2 R")
+            str_corpuses = random.sample(list_corpus, 2)
+            str_corpus = str_corpuses[0] + "。" + str_corpuses[1]
+
         print("str_corpus: ", str_corpus)
         temperature = 0.7 + random.random() * 0.2
         str_outputs = corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_new_tokens, chatio,
