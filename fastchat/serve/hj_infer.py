@@ -202,7 +202,7 @@ def chat_hj(
 
     inp_system = "基于以下语料，尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料："
     list_outputs = []
-    for corpus_i in tqdm.tqdm(range(len(list_corpus)*4)):
+    for corpus_i in range(100):
         print(" ")
         probability = random.random()
         if probability < 1/4:

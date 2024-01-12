@@ -37,7 +37,7 @@ CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 
 # Collect data
 ```bash
-CUDA_VISIBLE_DEVICES=6 nohup python fastchat/serve/hj_infer.py \
+CUDA_VISIBLE_DEVICES=2 nohup python fastchat/serve/hj_infer.py \
     > ./data/interim/nohup_hj_infer.log 2>&1 &
 ```
 
@@ -213,4 +213,39 @@ CUDA_VISIBLE_DEVICES=7 nohup python fastchat/train/train_lora.py \
     --logging_steps 1 \
     --model_max_length 2048 \
     > ./data/interim/output-epoch5-lr2em4-vdata19298-evalGPT.log 2>&1 &
+```
+
+zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
+```bash
+CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
+    --data_path ./data/interim/data_vicuna/data_vicuna_date011201_dataNum2697.json \
+    --eval_data_path ./data/raw/data_date121314_dataNum911.json \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "steps" \
+    --eval_steps 200  \
+    --save_strategy "steps" \
+    --save_steps 200 \
+    --save_total_limit 10 \
+    --num_train_epochs 5 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048 \
+    > ./data/interim/output-epoch5-lr2em4-vdata2697-evalGPT.log 2>&1 &
 ```
