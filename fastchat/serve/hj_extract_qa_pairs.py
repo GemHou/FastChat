@@ -8,49 +8,40 @@ def remove_prefix(input_str, prefixes):
 
     return input_str
 
+def extract_one_qa_pair(text):
+    current_qa_pair = {"question": "", "answer": ""}
+    # 使用正则表达式匹配问答对
+    matches_1 = re.match(r'(.+)(\n|\n\n)([\s\S]+)', text)
+    # print("matches_1: ", matches_1)
+    if matches_1 is not None:
+        matches = matches_1
+    else:
+        matches_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
+
+        if matches_2 is not None:
+            matches = matches_2
+        else:
+            print("Fail text: ", text)
+            matches = None
+    if matches:
+        # 将匹配的部分提取为问答对
+        question = matches.group(1).strip()
+        question = remove_prefix(question, ["问：", "问题：", "Q：", "1. "])
+        answer = matches.group(3).strip()
+        answer = remove_prefix(answer, ["答：", "回答：", "A："])                
+        # 更新当前问答对
+        current_qa_pair = {"question": question, "answer": answer}
+    else:
+        # 如果没有匹配到问答对，将文本追加到当前答案中
+        current_qa_pair["answer"] += "\n\n" + text.strip()
+    return current_qa_pair
 
 def extract_qa_pairs(text_list):
     qa_pairs = []
-    current_qa_pair = {"question": "", "answer": ""}
-
     for text in text_list:
-        # 使用正则表达式匹配问答对
-        matches_1 = re.match(r'(.+)(\n|\n\n)([\s\S]+)', text)
-        # print("matches_1: ", matches_1)
-        if matches_1 is not None:
-            matches = matches_1
-        else:
-            matches_2 = re.match(r'(问|问题|Q|)：(.+)(答|回答|A)：(.+)', text)
-
-            if matches_2 is not None:
-
-                matches = matches_2
-            else:
-                print("Fail text: ", text)
-                continue
-        if matches:
-            # 将匹配的部分提取为问答对
-            question = matches.group(1).strip()
-            question = remove_prefix(question, ["问：", "问题：", "Q：", "1. "])
-            answer = matches.group(3).strip()
-            answer = remove_prefix(answer, ["答：", "回答：", "A："])
-
-            # 如果当前问答对不为空，添加到列表中
-            if current_qa_pair["question"] and current_qa_pair["answer"]:
-                qa_pairs.append(current_qa_pair)
-
-            # 更新当前问答对
-            current_qa_pair = {"question": question, "answer": answer}
-        else:
-            # 如果没有匹配到问答对，将文本追加到当前答案中
-            current_qa_pair["answer"] += "\n\n" + text.strip()
-
-    # 添加最后一个问答对
-    if current_qa_pair["question"] and current_qa_pair["answer"]:
+        current_qa_pair = extract_one_qa_pair(text)
         qa_pairs.append(current_qa_pair)
-
     return qa_pairs
-
 
 if __name__ == "__main__":
     qa_pairs = extract_qa_pairs([
