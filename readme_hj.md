@@ -33,6 +33,8 @@ CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 CUDA_VISIBLE_DEVICES=3 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch20-lr2em4-vdata8196-evalGPT/checkpoint-1700
 
 CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata19298-evalGPT/checkpoint-1400
+
+CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT/checkpoint-400
 ```
 
 # Collect data
@@ -219,10 +221,10 @@ zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
 ```bash
 CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
-    --data_path ./data/interim/data_vicuna/data_vicuna_date011201_dataNum2697.json \
+    --data_path ./data/interim/data_vicuna/data_vicuna_date011201_dataNum23425.json \
     --eval_data_path ./data/raw/data_date121314_dataNum911.json \
-    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT \
-    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT \
     --fp16 True \
     --tf32 True \
     --q_lora True \
@@ -230,10 +232,8 @@ CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
     --flash_attn True \
     --lr_scheduler_type "cosine" \
     --logging_strategy "steps" \
-    --evaluation_strategy "steps" \
-    --eval_steps 200  \
-    --save_strategy "steps" \
-    --save_steps 200 \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
     --save_total_limit 10 \
     --num_train_epochs 5 \
     --lora_r 32 \
@@ -247,5 +247,5 @@ CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
     --warmup_ratio 0.03 \
     --logging_steps 1 \
     --model_max_length 2048 \
-    > ./data/interim/output-epoch5-lr2em4-vdata2697-evalGPT.log 2>&1 &
+    > ./data/interim/output-epoch5-lr2em4-vdata23425-evalGPT.log 2>&1 &
 ```
