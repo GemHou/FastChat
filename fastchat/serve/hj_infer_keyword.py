@@ -33,6 +33,21 @@ def get_list_corpus():
     list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
     return list_corpus
 
+def get_list_valid_keywords_sentences(list_keywords, list_corpus):
+    list_valid_keywords_sentences = []
+    for keyword in list_keywords:
+        # print("keyword: ", keyword)
+        mentioned_sentence_num = 0
+        list_mentioned_sentences = []
+        for sentence in list_corpus:
+            if keyword in sentence:
+                # print("sentence: ", sentence)
+                mentioned_sentence_num += 1
+                list_mentioned_sentences.append(sentence)
+        if mentioned_sentence_num > 0 and mentioned_sentence_num / len(list_keywords) < 0.4:
+            list_valid_keywords_sentences.append([keyword, list_mentioned_sentences])
+    return list_valid_keywords_sentences
+
 def main():
     list_keywords = get_list_keywords()
     # print("list_keywords: ", list_keywords)
@@ -40,11 +55,8 @@ def main():
     list_corpus = get_list_corpus()
     # print("list_corpus: ", list_corpus)
 
-    for keyword in list_keywords:
-        print("keyword: ", keyword)
-        for sentence in list_corpus:
-            if keyword in sentence:
-                print("sentence: ", sentence)
+    list_valid_keywords_sentences = get_list_valid_keywords_sentences(list_keywords, list_corpus)
+    print("list_valid_keywords_sentences: ", list_valid_keywords_sentences)
 
 
 if __name__ == "__main__":
