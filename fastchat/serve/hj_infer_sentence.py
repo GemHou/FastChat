@@ -40,6 +40,7 @@ from fastchat.model.model_adapter import (
 from fastchat.utils import get_context_length
 from fastchat.conversation import get_conv_template
 import random
+from hj_utils_language import split_text_by_dot_and_semicolon
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 # TEMPERATURE = 0.8
@@ -241,22 +242,6 @@ def chat_hj(
         list_outputs.append(str_outputs)
 
     return list_outputs
-
-
-def split_text_by_dot_and_semicolon(input_str):
-    # 使用句号和分号进行切分
-    split_chars = ['。', '；']
-
-    # 替换分号，以便更容易切分
-    input_str = input_str.replace('；', '。')
-
-    # 根据句号切分文本
-    sentences = input_str.split('。')
-
-    # 去除空白项
-    sentences = [s.strip() for s in sentences if s.strip()]
-
-    return sentences
 
 
 def corpus_2_strQa(args, list_corpus):

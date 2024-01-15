@@ -1,3 +1,7 @@
+from hj_utils_language import split_text_by_dot_and_semicolon
+
+INPUT_FILE_NAME = './data/raw/corpus_20231228_human.txt'  # None
+
 def merge_and_deduplicate_keywords(list_list_keywords):
     list_keywords = []
 
@@ -17,6 +21,17 @@ def main():
 
     list_keywords = merge_and_deduplicate_keywords(list_list_keywords)
     print("list_keywords: ", list_keywords)
+
+    if INPUT_FILE_NAME is None:
+        input_file_name = './data/raw/corpus.txt'
+    else:
+        input_file_name = INPUT_FILE_NAME
+    with open(input_file_name, 'r', encoding='utf-8') as file:
+        str_full_corpus = file.read()  # 读取文件的全部内容
+        # print("str_full_corpus: ", str_full_corpus)
+    print("str_full_corpus: ", str_full_corpus)
+    list_corpus = split_text_by_dot_and_semicolon(str_full_corpus)
+    print("list_corpus: ", list_corpus)
 
 if __name__ == "__main__":
     main()
