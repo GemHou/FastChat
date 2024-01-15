@@ -118,42 +118,44 @@ def main():
         debug=debug,
     )
     generate_stream_func = get_generate_stream_function(model, model_path)
-    inp = "hello"
-    conv = new_chat(model_path)
-    conv.append_message(conv.roles[0], inp)
-    conv.append_message(conv.roles[1], None)
-    prompt = conv.get_prompt()
     temperature = 0.7
     repetition_penalty = 1.0
     max_new_tokens = 2048
-    gen_params = {
-        "model": model_path,
-        "prompt": prompt,
-        "temperature": temperature,
-        "repetition_penalty": repetition_penalty,
-        "max_new_tokens": max_new_tokens,
-        "stop": conv.stop_str,
-        "stop_token_ids": conv.stop_token_ids,
-        "echo": False,
-    }
     context_len = get_context_length(model.config)
     judge_sent_end = False
-    output_stream = generate_stream_func(
-        model,
-        tokenizer,
-        gen_params,
-        device,
-        context_len=context_len,
-        judge_sent_end=judge_sent_end,
-    )
-    t = time.time()
-    multiline = False
-    chatio = SimpleChatIO(multiline)
-    outputs = chatio.stream_output(output_stream)
-    duration = time.time() - t
+    str_prompt_list = ["hello", "what is your name?", "goodbye"]
+    str_prompt = "hello"
+    for str_prompt in str_prompt_list:
+        conv = new_chat(model_path)
+        conv.append_message(conv.roles[0], str_prompt)
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
+        gen_params = {
+            "model": model_path,
+            "prompt": prompt,
+            "temperature": temperature,
+            "repetition_penalty": repetition_penalty,
+            "max_new_tokens": max_new_tokens,
+            "stop": conv.stop_str,
+            "stop_token_ids": conv.stop_token_ids,
+            "echo": False,
+        }
+        output_stream = generate_stream_func(
+            model,
+            tokenizer,
+            gen_params,
+            device,
+            context_len=context_len,
+            judge_sent_end=judge_sent_end,
+        )
+        t = time.time()
+        multiline = False
+        chatio = SimpleChatIO(multiline)
+        outputs = chatio.stream_output(output_stream)
+        duration = time.time() - t
 
-    print("duration: ", duration)
-    print("outputs: ", outputs)
+        print("duration: ", duration)
+        # print("outputs: ", outputs)
 
 
 if __name__ == "__main__":
