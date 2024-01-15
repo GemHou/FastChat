@@ -1,4 +1,5 @@
 import time
+import random
 
 from fastchat.model.model_adapter import get_generate_stream_function, load_model, get_conversation_template
 from fastchat.modules.gptq import GptqConfig
@@ -6,7 +7,8 @@ from fastchat.modules.awq import AWQConfig
 from fastchat.utils import get_context_length
 from fastchat.serve.cli import SimpleChatIO
 
-from hj_utils_language import split_text_by_dot_and_semicolon
+from hj_utils_language import split_text_by_dot_and_semicolon, get_date, save_qa_pairs_to_json
+from fastchat.serve.hj_extract_qa_pairs import extract_one_qa_pair
 
 INPUT_FILE_NAME = './data/raw/corpus_20231228_human.txt'  # None
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
@@ -109,12 +111,11 @@ def load_llm_model():
         debug=debug,
     )
     generate_stream_func = get_generate_stream_function(model, model_path)
-    temperature = 0.7
     repetition_penalty = 1.0
     max_new_tokens = 2048
     context_len = get_context_length(model.config)
     judge_sent_end = False
-    return model_path,device,model,tokenizer,generate_stream_func,temperature,repetition_penalty,max_new_tokens,context_len,judge_sent_end
+    return model_path,device,model,tokenizer,generate_stream_func,repetition_penalty,max_new_tokens,context_len,judge_sent_end
 
 
 def main():
@@ -127,39 +128,56 @@ def main():
     list_valid_keywords_sentences = get_list_valid_keywords_sentences(list_keywords, list_corpus)
     # print("list_valid_keywords_sentences: ", list_valid_keywords_sentences)
 
-    model_path, device, model, tokenizer, generate_stream_func, temperature, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
-    for i in range(10):
-        str_prompt = "基于以下语料，请围绕关键词'" + list_valid_keywords_sentences[i][0] + "'尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料：" + list_valid_keywords_sentences[i][1][0]
-        print("str_prompt: ", str_prompt)
-        conv = new_chat(model_path)
-        conv.append_message(conv.roles[0], str_prompt)
-        conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
-        gen_params = {
-            "model": model_path,
-            "prompt": prompt,
-            "temperature": temperature,
-            "repetition_penalty": repetition_penalty,
-            "max_new_tokens": max_new_tokens,
-            "stop": conv.stop_str,
-            "stop_token_ids": conv.stop_token_ids,
-            "echo": False,
-        }
-        output_stream = generate_stream_func(
-            model,
-            tokenizer,
-            gen_params,
-            device,
-            context_len=context_len,
-            judge_sent_end=judge_sent_end,
-        )
-        t = time.time()
-        multiline = False
-        chatio = SimpleChatIO(multiline)
-        outputs = chatio.stream_output(output_stream)
-        duration = time.time() - t
+    model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
+    list_qa = []
+    str_date = get_date()
+    start_time = last_save_time = time.time()
+    while time.time() - start_time < 60 * 60 * 24 * 3:
+        for ketword_i in range(len(list_valid_keywords_sentences)):
+            for sentence_j in range(len(list_valid_keywords_sentences[ketword_i][1])):
+                str_prompt = "基于以下语料，请围绕关键词'" + list_valid_keywords_sentences[ketword_i][0] + "'尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料：" + list_valid_keywords_sentences[ketword_i][1][sentence_j]
+                print("str_prompt: ", str_prompt)
+                conv = new_chat(model_path)
+                conv.append_message(conv.roles[0], str_prompt)
+                conv.append_message(conv.roles[1], None)
+                prompt = conv.get_prompt()
+                temperature = 0.7 + random.random() * 0.2
+                gen_params = {
+                    "model": model_path,
+                    "prompt": prompt,
+                    "temperature": temperature,
+                    "repetition_penalty": repetition_penalty,
+                    "max_new_tokens": max_new_tokens,
+                    "stop": conv.stop_str,
+                    "stop_token_ids": conv.stop_token_ids,
+                    "echo": False,
+                }
+                output_stream = generate_stream_func(
+                    model,
+                    tokenizer,
+                    gen_params,
+                    device,
+                    context_len=context_len,
+                    judge_sent_end=judge_sent_end,
+                )
+                t = time.time()
+                multiline = False
+                chatio = SimpleChatIO(multiline)
+                outputs = chatio.stream_output(output_stream)
+                duration = time.time() - t
 
-        print("duration: ", duration)
+                print("duration: ", duration)
+
+                qa_pair = extract_one_qa_pair(outputs)
+                print("qa_pair: ", qa_pair)
+
+                list_qa.append(qa_pair)
+
+                if len(list_qa) == 3 or time.time() - last_save_time > 60:  # 60 * 60 * 2 60
+                    str_data_num = "_dataNum" + str(len(list_qa))
+                    output_file = './data/interim/data_vicuna_keyword' + '/data_vicuna_keyword_' + str_date + str_data_num + '.json'
+                    save_qa_pairs_to_json(list_qa, output_file)
+                    last_save_time = time.time()
 
 
 if __name__ == "__main__":

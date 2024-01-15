@@ -20,8 +20,6 @@ import torch
 from typing import Optional
 import time
 import tqdm
-import json
-from datetime import datetime
 
 from fastchat.model.model_adapter import add_model_args
 from fastchat.modules.awq import AWQConfig
@@ -40,7 +38,7 @@ from fastchat.model.model_adapter import (
 from fastchat.utils import get_context_length
 from fastchat.conversation import get_conv_template
 import random
-from hj_utils_language import split_text_by_dot_and_semicolon
+from hj_utils_language import split_text_by_dot_and_semicolon, get_date, save_qa_pairs_to_json
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 # TEMPERATURE = 0.8
@@ -112,18 +110,6 @@ def corpus_2_outputs(model_path, device, temperature, repetition_penalty, max_ne
     #         reload_conv(conv)
     #     outputs = None
     return outputs
-
-
-def save_qa_pairs_to_json(qa_pairs, json_file_path):
-    data = []
-    for idx, qa_pair in enumerate(qa_pairs):
-        human_msg = {"from": "human", "value": qa_pair["question"]}
-        gpt_msg = {"from": "gpt", "value": qa_pair["answer"]}
-        conversation_data = {"id": f"identity_{idx}", "conversations": [human_msg, gpt_msg]}
-        data.append(conversation_data)
-
-    with open(json_file_path, 'w', encoding='utf-8') as json_file:
-        json.dump(data, json_file, ensure_ascii=False, indent=2)
 
 
 def chat_hj(
@@ -313,18 +299,6 @@ def corpus_2_strQa(args, list_corpus):
         history=not args.no_history,
     )
     return list_str_qa
-
-
-def get_date():
-    # 获取当前时间
-    now = datetime.now()
-    # 提取月、日和小时
-    month = now.month
-    day = now.day
-    hour = now.hour
-    # 格式化成字符串，保证月、日、小时都是两位数
-    str_date = f"_date{month:02d}{day:02d}{hour:02d}"
-    return str_date
 
 
 def main(args):
