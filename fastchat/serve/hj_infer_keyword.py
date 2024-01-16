@@ -195,9 +195,9 @@ def main():
 
                 list_qa.append(qa_pair)
 
-                if len(list_qa) == 3 or time.time() - last_save_time > 60:  # 60 * 60 * 2 60
+                if len(list_qa) == 3 or time.time() - last_save_time > 60 * 60 * 2:  # 60 * 60 * 2 60
                     str_data_num = "_dataNum" + str(len(list_qa))
-                    output_file = './data/interim/data_vicuna_keyword' + '/data_vicuna_keyword_' + str_date + str_data_num + '.json'
+                    output_file = './data/interim/data_vicuna_keyword' + '/data_vicuna_keyword' + str_date + str_data_num + '.json'
                     save_qa_pairs_to_json(list_qa, output_file)
                     last_save_time = time.time()
 

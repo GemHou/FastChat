@@ -34,13 +34,18 @@ CUDA_VISIBLE_DEVICES=3 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 
 CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata19298-evalGPT/checkpoint-1400
 
-CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata2697-evalGPT/checkpoint-400
+CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT/checkpoint-2196
 ```
 
 # Collect data
 ```bash
 CUDA_VISIBLE_DEVICES=2 nohup python fastchat/serve/hj_infer.py \
     > ./data/interim/nohup_hj_infer.log 2>&1 &
+```
+
+```bash
+CUDA_VISIBLE_DEVICES=2 nohup python fastchat/serve/hj_infer_keyword.py \
+    > ./data/interim/nohup_hj_infer_keyword.log 2>&1 &
 ```
 
 # Train
@@ -219,12 +224,12 @@ CUDA_VISIBLE_DEVICES=7 nohup python fastchat/train/train_lora.py \
 
 zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
 ```bash
-CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
+CUDA_VISIBLE_DEVICES=4 nohup python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
-    --data_path ./data/interim/data_vicuna/data_vicuna_date011201_dataNum23425.json \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum6797.json \
     --eval_data_path ./data/raw/data_date121314_dataNum911.json \
-    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT \
-    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword6797-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword6797-evalGPT \
     --fp16 True \
     --tf32 True \
     --q_lora True \
@@ -247,5 +252,5 @@ CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
     --warmup_ratio 0.03 \
     --logging_steps 1 \
     --model_max_length 2048 \
-    > ./data/interim/output-epoch5-lr2em4-vdata23425-evalGPT.log 2>&1 &
+    > ./data/interim/output-epoch5-lr2em4-vDataKeyword6797-evalGPT.log 2>&1 &
 ```
