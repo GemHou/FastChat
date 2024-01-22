@@ -19,6 +19,7 @@ class TrainingArguments(transformers.TrainingArguments):
         },
     )
     flash_attn: bool = False
+    model_path: str = field(default=None, metadata={"help": "checkpoint dir"})
 
 def main():
     print("hello world")
@@ -27,7 +28,7 @@ def main():
     (data_args, training_args) = parser.parse_args_into_dataclasses()
     print("got args")
 
-    if False:
+    if training_args.model_path is None:
         model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
         model = transformers.AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
@@ -46,20 +47,10 @@ def main():
         print("got tokenizer")
     else:
         from fastchat.model.model_adapter import get_model_adapter
-        # args = parser.parse_args()
-        # model_path = args.model_path
-        model_path = "./data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
+        model_path = training_args.model_path
         adapter = get_model_adapter(model_path)
-        # model, tokenizer = adapter.load_compress_model(
-        #         model_path=model_path,
-        #         device="cuda",
-        #         torch_dtype=torch.float16,
-        #         # revision=revision,
-        #     )
         kwargs = {"torch_dtype": torch.float16}
         model, tokenizer = adapter.load_model(model_path, kwargs)
-
-    # data_args.eval_data_path = "./data/raw/data_date121314_dataNum911.json"
 
     data_args.data_path = data_args.eval_data_path
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
