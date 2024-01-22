@@ -20,6 +20,7 @@ class TrainingArguments(transformers.TrainingArguments):
     )
     flash_attn: bool = False
     model_path: str = field(default=None, metadata={"help": "checkpoint dir"})
+    model_name_or_path: str = field(default=None, metadata={"help": "model dir"})
 
 def main():
     print("hello world")
@@ -29,16 +30,17 @@ def main():
     print("got args")
 
     if training_args.model_path is None:
-        model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+        assert training_args.model_name_or_path is not None
+        # model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
         model = transformers.AutoModelForCausalLM.from_pretrained(
-            model_name_or_path,
+            training_args.model_name_or_path,
             cache_dir=None,
             device_map=None
         )
         print("got model")
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(
-            model_name_or_path,
+            training_args.model_name_or_path,
             cache_dir=None,
             model_max_length=2048,
             padding_side="right",
@@ -46,6 +48,7 @@ def main():
         )
         print("got tokenizer")
     else:
+        assert training_args.model_name_or_path is None
         from fastchat.model.model_adapter import get_model_adapter
         model_path = training_args.model_path
         adapter = get_model_adapter(model_path)
