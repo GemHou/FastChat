@@ -393,7 +393,8 @@ CUDA_VISIBLE_DEVICES=3 python fastchat/train/train_lora.py \
 ```
 
 ```bash
-CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_test_lora.py \
-    --output_dir ./data/interim/vicuna-13b-lora-eval \
+CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_test_lora.py \
+    --eval_data_path /mnt/nfs/houjing/repo/FastChat/data/raw/data_date121314_dataNum911.json \
+    --output_dir /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-eval \
     --per_device_eval_batch_size 2
 ```

@@ -43,9 +43,9 @@ def main():
     )
     print("got tokenizer")
 
-    eval_data_path = "./data/raw/data_date121314_dataNum911.json"
+    # data_args.eval_data_path = "./data/raw/data_date121314_dataNum911.json"
 
-    data_args.data_path = eval_data_path
+    data_args.data_path = data_args.eval_data_path
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
 
     trainer = Trainer(
@@ -53,7 +53,7 @@ def main():
     )
     print("got trainer")
 
-    eval_json = json.load(open(eval_data_path, "r"))
+    eval_json = json.load(open(data_args.eval_data_path, "r"))
     dataset_cls = (
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
