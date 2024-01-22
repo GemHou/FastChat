@@ -394,7 +394,7 @@ CUDA_VISIBLE_DEVICES=3 python fastchat/train/train_lora.py \
 
 # Path Without FT
 ```bash
-CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_test_lora.py \
+CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_eval_checkpoint_json.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
     --eval_data_path /mnt/nfs/houjing/repo/FastChat/data/raw/data_date121314_dataNum911.json \
     --output_dir /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-eval \
@@ -403,7 +403,7 @@ CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_t
 
 # Path With FT
 ```bash
-CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_test_lora.py \
+CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_eval_checkpoint_json.py \
     --model_path /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500 \
     --eval_data_path /mnt/nfs/houjing/repo/FastChat/data/raw/data_date121314_dataNum911.json \
     --output_dir /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-eval \
