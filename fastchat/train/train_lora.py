@@ -116,6 +116,11 @@ def train():
         lora_args,
     ) = parser.parse_args_into_dataclasses()
 
+    print("model_args.model_name_or_path: ", model_args.model_name_or_path)
+    print("training_args.cache_dir: ", training_args.cache_dir)
+    print("training_args.model_max_length: ", training_args.model_max_length)
+    print("training_args: ", training_args)
+
     if training_args.flash_attn:
         replace_llama_attn_with_flash_attn()
 
@@ -128,6 +133,7 @@ def train():
             logging.warning(
                 "FSDP and ZeRO3 are both currently incompatible with QLoRA."
             )
+    print("device_map: ", device_map)
 
     compute_dtype = (
         torch.float16

@@ -34,7 +34,13 @@ CUDA_VISIBLE_DEVICES=3 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 
 CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata19298-evalGPT/checkpoint-1400
 
-CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vdata23425-evalGPT/checkpoint-2196
+CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword6797-evalGPT/checkpoint-637
+
+CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500
+
+CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT/checkpoint-3133
+
+CUDA_VISIBLE_DEVICES=2 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT/checkpoint-2031
 ```
 
 # Collect data
@@ -224,12 +230,12 @@ CUDA_VISIBLE_DEVICES=7 nohup python fastchat/train/train_lora.py \
 
 zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
 ```bash
-CUDA_VISIBLE_DEVICES=4 nohup python fastchat/train/train_lora.py \
+CUDA_VISIBLE_DEVICES=3 nohup python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
-    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum6797.json \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum20438.json \
     --eval_data_path ./data/raw/data_date121314_dataNum911.json \
-    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword6797-evalGPT \
-    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword6797-evalGPT \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438-evalGPT \
     --fp16 True \
     --tf32 True \
     --q_lora True \
@@ -252,5 +258,136 @@ CUDA_VISIBLE_DEVICES=4 nohup python fastchat/train/train_lora.py \
     --warmup_ratio 0.03 \
     --logging_steps 1 \
     --model_max_length 2048 \
-    > ./data/interim/output-epoch5-lr2em4-vDataKeyword6797-evalGPT.log 2>&1 &
+    > ./data/interim/output-epoch5-lr2em4-vDataKeyword20438-evalGPT.log 2>&1 &
+```
+
+zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
+```bash
+CUDA_VISIBLE_DEVICES=6 nohup python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum20438_4622.json \
+    --eval_data_path ./data/raw/data_date121314_dataNum911.json \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
+    --save_total_limit 10 \
+    --num_train_epochs 5 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048 \
+    > ./data/interim/output-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT.log 2>&1 &
+```
+
+zhangqi python hjPara largeLearningRate mixData 13B evalGPT:
+```bash
+CUDA_VISIBLE_DEVICES=3 nohup python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum4550_4733.json \
+    --eval_data_path ./data/raw/data_date121314_dataNum911.json \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT \
+    --run_name vicuna-13b-lora-CQ-v0-0102-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
+    --save_total_limit 10 \
+    --num_train_epochs 20 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048 \
+    > ./data/interim/output-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT.log 2>&1 &
+```
+
+```bash
+CUDA_VISIBLE_DEVICES=2 nohup python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum37232.json \
+    --dev_ratio 0.1 \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232 \
+    --run_name vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232 \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
+    --save_total_limit 10 \
+    --num_train_epochs 10 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048 \
+    > ./data/interim/nohup_train_lora_epoch10_vdata37232.log 2>&1 &
+```
+
+```bash
+CUDA_VISIBLE_DEVICES=3 python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5 \
+    --data_path ./data/interim/data_vicuna_keyword/data_vicuna_keyword__date011521_dataNum37232.json \
+    --dev_ratio 0.1 \
+    --output_dir ./data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232-2 \
+    --run_name vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232-2 \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
+    --save_total_limit 10 \
+    --num_train_epochs 10 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048
 ```
