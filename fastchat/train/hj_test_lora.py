@@ -3,6 +3,7 @@ from transformers import Trainer
 from dataclasses import dataclass, field
 import typing
 import json
+import torch
 
 from fastchat.train.train import DataArguments, make_supervised_data_module, LazySupervisedDataset, SupervisedDataset
 
@@ -26,22 +27,37 @@ def main():
     (data_args, training_args) = parser.parse_args_into_dataclasses()
     print("got args")
 
-    model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_name_or_path,
-        cache_dir=None,
-        device_map=None
-    )
-    print("got model")
+    if False:
+        model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            cache_dir=None,
+            device_map=None
+        )
+        print("got model")
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(
-        model_name_or_path,
-        cache_dir=None,
-        model_max_length=2048,
-        padding_side="right",
-        use_fast=False,
-    )
-    print("got tokenizer")
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            model_name_or_path,
+            cache_dir=None,
+            model_max_length=2048,
+            padding_side="right",
+            use_fast=False,
+        )
+        print("got tokenizer")
+    else:
+        from fastchat.model.model_adapter import get_model_adapter
+        # args = parser.parse_args()
+        # model_path = args.model_path
+        model_path = "./data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
+        adapter = get_model_adapter(model_path)
+        # model, tokenizer = adapter.load_compress_model(
+        #         model_path=model_path,
+        #         device="cuda",
+        #         torch_dtype=torch.float16,
+        #         # revision=revision,
+        #     )
+        kwargs = {"torch_dtype": torch.float16}
+        model, tokenizer = adapter.load_model(model_path, kwargs)
 
     # data_args.eval_data_path = "./data/raw/data_date121314_dataNum911.json"
 

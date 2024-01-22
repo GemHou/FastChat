@@ -398,3 +398,5 @@ CUDA_VISIBLE_DEVICES=6 python /mnt/nfs/houjing/repo/FastChat/fastchat/train/hj_t
     --output_dir /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-eval \
     --per_device_eval_batch_size 2
 ```
+
+--model-path ./data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500
