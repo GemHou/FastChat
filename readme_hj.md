@@ -391,3 +391,9 @@ CUDA_VISIBLE_DEVICES=3 python fastchat/train/train_lora.py \
     --logging_steps 1 \
     --model_max_length 2048
 ```
+
+```bash
+CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_test_lora.py \
+    --output_dir ./data/interim/vicuna-13b-lora-eval \
+    --per_device_eval_batch_size 2
+```

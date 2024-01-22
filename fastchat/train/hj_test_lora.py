@@ -22,6 +22,10 @@ class TrainingArguments(transformers.TrainingArguments):
 def main():
     print("hello world")
 
+    parser = transformers.HfArgumentParser((DataArguments, TrainingArguments))
+    (data_args, training_args) = parser.parse_args_into_dataclasses()
+    print("got args")
+
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_name_or_path,
@@ -39,9 +43,9 @@ def main():
     )
     print("got tokenizer")
 
-    parser = transformers.HfArgumentParser((DataArguments, TrainingArguments))
-    (data_args, training_args) = parser.parse_args_into_dataclasses()
+    eval_data_path = "./data/raw/data_date121314_dataNum911.json"
 
+    data_args.data_path = eval_data_path
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
 
     trainer = Trainer(
@@ -49,17 +53,16 @@ def main():
     )
     print("got trainer")
 
-    eval_data_path = "./data/raw/data_date121314_dataNum911.json"
     eval_json = json.load(open(eval_data_path, "r"))
     dataset_cls = (
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
-    eval_dataset = dataset_cls(eval_json, tokenizer=tokenizer)
-    print("got eval_dataset")
+    total_eval_dataset = dataset_cls(eval_json, tokenizer=tokenizer)
+    print("got total_eval_dataset")
 
     ignore_keys_for_eval = None
     dataset_metrics = trainer.evaluate(
-                        eval_dataset=eval_dataset,
+                        eval_dataset=total_eval_dataset,
                         ignore_keys=ignore_keys_for_eval,
                         metric_key_prefix=f"eval_temp",
                     )
