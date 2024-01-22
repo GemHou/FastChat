@@ -7,6 +7,9 @@ import torch
 
 from fastchat.train.train import DataArguments, make_supervised_data_module, LazySupervisedDataset, SupervisedDataset
 
+import os
+os.environ["WANDB_API_KEY"] = 'KEY'
+os.environ["WANDB_MODE"] = "offline"
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
