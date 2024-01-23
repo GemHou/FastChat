@@ -28,11 +28,13 @@ def main():
     model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
 
     print("Processing...")
-    str_prompt = "hello"
-    outputs = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
-
-    str_prompt = "你好"
-    outputs = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
+    for qa_pair in loaded_qa_pairs:
+        question = qa_pair["question"]
+        answer = qa_pair["answer"]
+        corpus = qa_pair["corpus"]
+        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer + "\n"
+        print("str_prompt: ", str_prompt)
+        outputs = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
 
     print("Saving...")
     pass
