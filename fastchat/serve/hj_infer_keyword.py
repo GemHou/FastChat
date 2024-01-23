@@ -139,6 +139,39 @@ def load_llm_model():
     judge_sent_end = False
     return model_path,device,model,tokenizer,generate_stream_func,repetition_penalty,max_new_tokens,context_len,judge_sent_end
 
+def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt):
+    conv = new_chat(model_path)
+    conv.append_message(conv.roles[0], str_prompt)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
+    temperature = 0.7 + random.random() * 0.2
+    gen_params = {
+                    "model": model_path,
+                    "prompt": prompt,
+                    "temperature": temperature,
+                    "repetition_penalty": repetition_penalty,
+                    "max_new_tokens": max_new_tokens,
+                    "stop": conv.stop_str,
+                    "stop_token_ids": conv.stop_token_ids,
+                    "echo": False,
+                }
+    output_stream = generate_stream_func(
+                    model,
+                    tokenizer,
+                    gen_params,
+                    device,
+                    context_len=context_len,
+                    judge_sent_end=judge_sent_end,
+                )
+    t = time.time()
+    multiline = False
+    chatio = SimpleChatIO(multiline)
+    outputs = chatio.stream_output(output_stream)
+    duration = time.time() - t
+
+    print("duration: ", duration)
+    return outputs
+
 
 def main():
     list_keywords = get_list_keywords()
@@ -160,36 +193,7 @@ def main():
             for sentence_j in range(len(list_valid_keywords_sentences[ketword_i][1])):
                 str_prompt = "基于以下语料，请围绕关键词'" + list_valid_keywords_sentences[ketword_i][0] + "'尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料：" + list_valid_keywords_sentences[ketword_i][1][sentence_j]
                 print("str_prompt: ", str_prompt)
-                conv = new_chat(model_path)
-                conv.append_message(conv.roles[0], str_prompt)
-                conv.append_message(conv.roles[1], None)
-                prompt = conv.get_prompt()
-                temperature = 0.7 + random.random() * 0.2
-                gen_params = {
-                    "model": model_path,
-                    "prompt": prompt,
-                    "temperature": temperature,
-                    "repetition_penalty": repetition_penalty,
-                    "max_new_tokens": max_new_tokens,
-                    "stop": conv.stop_str,
-                    "stop_token_ids": conv.stop_token_ids,
-                    "echo": False,
-                }
-                output_stream = generate_stream_func(
-                    model,
-                    tokenizer,
-                    gen_params,
-                    device,
-                    context_len=context_len,
-                    judge_sent_end=judge_sent_end,
-                )
-                t = time.time()
-                multiline = False
-                chatio = SimpleChatIO(multiline)
-                outputs = chatio.stream_output(output_stream)
-                duration = time.time() - t
-
-                print("duration: ", duration)
+                outputs = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
 
                 qa_pair = extract_one_qa_pair(outputs)
                 print("qa_pair: ", qa_pair)
