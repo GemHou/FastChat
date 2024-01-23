@@ -152,6 +152,7 @@ def main():
 
     model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
     list_qa = []
+    list_corpus_qa = []
     str_date = get_date()
     start_time = last_save_time = time.time()
     while time.time() - start_time < 60 * 60 * 24 * 3:
@@ -194,11 +195,13 @@ def main():
                 print("qa_pair: ", qa_pair)
 
                 list_qa.append(qa_pair)
+                list_corpus_qa.append(list_valid_keywords_sentences[ketword_i][1][sentence_j])
 
                 if len(list_qa) == 3 or time.time() - last_save_time > 60 * 60 * 2:  # 60 * 60 * 2 60
+                    assert len(list_qa)==len(list_corpus_qa)
                     str_data_num = "_dataNum" + str(len(list_qa))
                     output_file = './data/interim/data_vicuna_keyword' + '/data_vicuna_keyword' + str_date + str_data_num + '.json'
-                    save_qa_pairs_to_json(list_qa, output_file)
+                    save_qa_pairs_to_json(list_qa, output_file, list_corpus_qa=list_corpus_qa)
                     last_save_time = time.time()
 
 

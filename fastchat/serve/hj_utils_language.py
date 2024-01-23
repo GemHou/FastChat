@@ -28,12 +28,20 @@ def get_date():
     str_date = f"_date{month:02d}{day:02d}{hour:02d}"
     return str_date
 
-def save_qa_pairs_to_json(qa_pairs, json_file_path):
+def save_qa_pairs_to_json(qa_pairs, json_file_path, list_corpus_qa=None):
     data = []
     for idx, qa_pair in enumerate(qa_pairs):
         human_msg = {"from": "human", "value": qa_pair["question"]}
         gpt_msg = {"from": "gpt", "value": qa_pair["answer"]}
-        conversation_data = {"id": f"identity_{idx}", "conversations": [human_msg, gpt_msg]}
+        if list_corpus_qa is None:
+            conversation_data = {"id": f"identity_{idx}", 
+                                "conversations": [human_msg, gpt_msg]
+                                }
+        else:
+            conversation_data = {"id": f"identity_{idx}", 
+                                "conversations": [human_msg, gpt_msg],
+                                "corpus": list_corpus_qa[idx]
+                                }
         data.append(conversation_data)
 
     with open(json_file_path, 'w', encoding='utf-8') as json_file:

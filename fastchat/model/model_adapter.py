@@ -184,7 +184,7 @@ def load_model(
 
     """Load a model from Hugging Face."""
     # get model adapter
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!model_path: ", model_path)
+    # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!model_path: ", model_path)
     adapter = get_model_adapter(model_path)
 
     # Handle device mapping
@@ -266,7 +266,7 @@ def load_model(
                 "8-bit quantization is not supported for multi-gpu inference."
             )
         else:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!model_path: ", model_path)
+            # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!model_path: ", model_path)
             model, tokenizer = adapter.load_compress_model(
                 model_path=model_path,
                 device=device,
