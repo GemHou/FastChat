@@ -1,7 +1,13 @@
+import random
+import time
+
 from fastchat.modules.gptq import GptqConfig
 from fastchat.modules.awq import AWQConfig
 from fastchat.model.model_adapter import get_generate_stream_function, load_model
 from fastchat.utils import get_context_length
+
+from fastchat.model.model_adapter import get_conversation_template
+from fastchat.serve.cli import SimpleChatIO
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 
@@ -56,3 +62,43 @@ def load_llm_model():
     context_len = get_context_length(model.config)
     judge_sent_end = False
     return model_path,device,model,tokenizer,generate_stream_func,repetition_penalty,max_new_tokens,context_len,judge_sent_end
+
+
+
+def new_chat(model_path):
+        conv = get_conversation_template(model_path)
+        return conv
+
+
+def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt):
+    conv = new_chat(model_path)
+    conv.append_message(conv.roles[0], str_prompt)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
+    temperature = 0.7 + random.random() * 0.2
+    gen_params = {
+                    "model": model_path,
+                    "prompt": prompt,
+                    "temperature": temperature,
+                    "repetition_penalty": repetition_penalty,
+                    "max_new_tokens": max_new_tokens,
+                    "stop": conv.stop_str,
+                    "stop_token_ids": conv.stop_token_ids,
+                    "echo": False,
+                }
+    output_stream = generate_stream_func(
+                    model,
+                    tokenizer,
+                    gen_params,
+                    device,
+                    context_len=context_len,
+                    judge_sent_end=judge_sent_end,
+                )
+    t = time.time()
+    multiline = False
+    chatio = SimpleChatIO(multiline)
+    outputs = chatio.stream_output(output_stream)
+    duration = time.time() - t
+
+    print("duration: ", duration)
+    return outputs
