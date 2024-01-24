@@ -48,6 +48,22 @@ def judge_truth(str_llm_answer):
         truth_ratio = 0.5
     return truth_ratio
 
+def val_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
+    list_truth_ratio = []
+    for qa_pair in tqdm.tqdm(loaded_qa_pairs):
+        question = qa_pair["question"]
+        answer = qa_pair["answer"]
+        corpus = qa_pair["corpus"]
+        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer + "\n"
+        print("str_prompt: ", str_prompt)
+        print("truth answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
+        # print("str_llm_answer: ", str_llm_answer)
+        truth_ratio = judge_truth(str_llm_answer)
+        print("truth_ratio: ", truth_ratio)
+        list_truth_ratio.append(truth_ratio)
+    return list_truth_ratio
+
 
 def main():
     print("Loading...")
@@ -62,14 +78,12 @@ def main():
         question = qa_pair["question"]
         answer = qa_pair["answer"]
         corpus = qa_pair["corpus"]
-        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer + "\n"
+        str_prompt = question
         print("str_prompt: ", str_prompt)
         print("truth answer: ")
         str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
         print("str_llm_answer: ", str_llm_answer)
-        truth_ratio = judge_truth(str_llm_answer)
-        print("truth_ratio: ", truth_ratio)
-        list_truth_ratio.append(truth_ratio)
+    # list_truth_ratio = val_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
 
     print("Saving...")
     print("np.mean(list_truth_ratio): ", np.mean(list_truth_ratio))
