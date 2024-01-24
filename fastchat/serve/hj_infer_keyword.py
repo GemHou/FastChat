@@ -1,4 +1,6 @@
 import time
+import tqdm
+
 from fastchat.serve.hj_extract_qa_pairs import extract_one_qa_pair
 
 from hj_utils_language import split_text_by_dot_and_semicolon, get_date, save_qa_pairs_to_json
@@ -91,8 +93,10 @@ def main():
     list_corpus_qa = []
     str_date = get_date()
     start_time = last_save_time = time.time()
+    epoch = 0
     while time.time() - start_time < 60 * 60 * 24 * 3:
-        for ketword_i in range(len(list_valid_keywords_sentences)):
+        epoch += 1
+        for ketword_i in tqdm.tqdm(range(len(list_valid_keywords_sentences))):
             for sentence_j in range(len(list_valid_keywords_sentences[ketword_i][1])):
                 str_prompt = "基于以下语料，请围绕关键词'" + list_valid_keywords_sentences[ketword_i][0] + "'尝试生成1个简洁精简的问题和回答，整理成问答格式，不要胡编乱造内容。语料：" + list_valid_keywords_sentences[ketword_i][1][sentence_j]
                 print("str_prompt: ", str_prompt)
@@ -104,7 +108,9 @@ def main():
                 list_qa.append(qa_pair)
                 list_corpus_qa.append(list_valid_keywords_sentences[ketword_i][1][sentence_j])
 
-                if len(list_qa) == 3 or time.time() - last_save_time > 60 * 60 * 2:  # 60 * 60 * 2 60
+                if len(list_qa) == 3 \
+                        or time.time() - last_save_time > 60 * 60 * 2 \
+                        or (epoch==1 and ketword_i==len(list_valid_keywords_sentences)-1 and sentence_j==len(list_valid_keywords_sentences[ketword_i][1])):  # 60 * 60 * 2 60
                     assert len(list_qa)==len(list_corpus_qa)
                     str_data_num = "_dataNum" + str(len(list_qa))
                     output_file = './data/interim/data_vicuna_keyword' + '/data_vicuna_keyword' + str_date + str_data_num + '.json'
