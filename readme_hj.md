@@ -54,6 +54,11 @@ CUDA_VISIBLE_DEVICES=2 nohup python fastchat/serve/hj_infer_keyword.py \
     > ./data/interim/nohup_hj_infer_keyword.log 2>&1 &
 ```
 
+# Judege truth
+```bash
+CUDA_VISIBLE_DEVICES=2 python fastchat/serve/hj_infer_truth.py
+```
+
 # Train
 
 zhangqi python hjPara splitData backgroundData:
