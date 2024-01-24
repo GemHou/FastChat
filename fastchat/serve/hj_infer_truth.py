@@ -26,6 +26,7 @@ def main():
     print("Loading...")
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
+    loaded_qa_pairs = loaded_qa_pairs[:100]
     model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
 
     print("Processing...")
