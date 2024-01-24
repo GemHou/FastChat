@@ -4,7 +4,7 @@ import tqdm
 from fastchat.serve.hj_extract_qa_pairs import extract_one_qa_pair
 
 from hj_utils_language import split_text_by_dot_and_semicolon, get_date, save_qa_pairs_to_json
-from hj_utils_llm import load_llm_model, infer_llm
+from hj_utils_llm import load_llm_model, load_llm_setting, infer_llm
 
 INPUT_FILE_NAME = './data/raw/corpus_20231228_human.txt'  # None
 
@@ -88,7 +88,11 @@ def main():
     list_valid_keywords_sentences = get_list_valid_keywords_sentences(list_keywords, list_corpus)
     # print("list_valid_keywords_sentences: ", list_valid_keywords_sentences)
 
-    model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
+    model_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+    device = "cuda"
+    model, tokenizer = load_llm_model(model_path=model_path, device=device)
+    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
+
     list_qa = []
     list_corpus_qa = []
     str_date = get_date()

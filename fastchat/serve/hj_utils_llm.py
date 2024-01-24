@@ -11,9 +11,15 @@ from fastchat.serve.cli import SimpleChatIO
 
 MODEL_PATH = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
 
-def load_llm_model():
-    model_path = MODEL_PATH
-    device = "cuda"
+def load_llm_setting(model_path, model):
+    generate_stream_func = get_generate_stream_function(model, model_path)
+    repetition_penalty = 1.0
+    max_new_tokens = 2048
+    context_len = get_context_length(model.config)
+    judge_sent_end = False
+    return generate_stream_func,repetition_penalty,max_new_tokens,context_len,judge_sent_end
+
+def load_llm_model(model_path = MODEL_PATH, device = "cuda"):
     num_gpus = 1
     max_gpu_memory = None
     dtype = None
@@ -56,12 +62,8 @@ def load_llm_model():
         revision=revision,
         debug=debug,
     )
-    generate_stream_func = get_generate_stream_function(model, model_path)
-    repetition_penalty = 1.0
-    max_new_tokens = 2048
-    context_len = get_context_length(model.config)
-    judge_sent_end = False
-    return model_path,device,model,tokenizer,generate_stream_func,repetition_penalty,max_new_tokens,context_len,judge_sent_end
+    # generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
+    return model,tokenizer
 
 
 

@@ -1,8 +1,9 @@
 import json
 import tqdm
 import numpy as np
+import torch
 
-from hj_utils_llm import load_llm_model, infer_llm
+from hj_utils_llm import load_llm_model, infer_llm, load_llm_setting
 
 def load_qa_pairs_from_json(json_file_path):
     with open(json_file_path, 'r', encoding='utf-8') as json_file:
@@ -48,7 +49,7 @@ def judge_truth(str_llm_answer):
         truth_ratio = 0.5
     return truth_ratio
 
-def val_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
+def eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
     list_truth_ratio = []
     for qa_pair in tqdm.tqdm(loaded_qa_pairs):
         question = qa_pair["question"]
@@ -70,7 +71,20 @@ def main():
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
     loaded_qa_pairs = loaded_qa_pairs[:100]
-    model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_model()
+
+    device = "cuda"
+    if False:
+        model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+        model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)
+        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path=model_name_or_path, model=model)
+    else:
+        model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
+        from fastchat.model.model_adapter import get_model_adapter
+        kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+        adapter = get_model_adapter(model_path)
+        model, tokenizer = adapter.load_model(model_path, kwargs)
+        model.to(device)
+        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
 
     print("Processing...")
     list_truth_ratio = []
@@ -83,7 +97,7 @@ def main():
         print("truth answer: ")
         str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
         print("str_llm_answer: ", str_llm_answer)
-    # list_truth_ratio = val_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    # list_truth_ratio = eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
 
     print("Saving...")
     print("np.mean(list_truth_ratio): ", np.mean(list_truth_ratio))
