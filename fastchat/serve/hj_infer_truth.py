@@ -53,13 +53,33 @@ def eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, ge
     list_truth_ratio = []
     for qa_pair in tqdm.tqdm(loaded_qa_pairs):
         question = qa_pair["question"]
-        answer = qa_pair["answer"]
+        answer_llm_env = qa_pair["answer"]
         corpus = qa_pair["corpus"]
-        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer + "\n"
+        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer_llm_env + "\n"
         print("str_prompt: ", str_prompt)
-        print("truth answer: ")
-        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
-        # print("str_llm_answer: ", str_llm_answer)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        truth_ratio = judge_truth(str_llm_answer)
+        print("truth_ratio: ", truth_ratio)
+        list_truth_ratio.append(truth_ratio)
+    return list_truth_ratio
+
+def eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
+    list_truth_ratio = []
+    for qa_pair in tqdm.tqdm(loaded_qa_pairs):
+        question = qa_pair["question"]
+        answer_llm_env = qa_pair["answer"]
+        corpus = qa_pair["corpus"]
+        str_prompt = question
+        print("str_prompt: ", str_prompt)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        answer_llm_policy = str_llm_answer
+
+        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer_llm_policy + "\n"
+        print("str_prompt: ", str_prompt)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
         truth_ratio = judge_truth(str_llm_answer)
         print("truth_ratio: ", truth_ratio)
         list_truth_ratio.append(truth_ratio)
@@ -87,20 +107,12 @@ def main():
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
 
     print("Processing...")
-    list_truth_ratio = []
-    for qa_pair in tqdm.tqdm(loaded_qa_pairs):
-        question = qa_pair["question"]
-        answer = qa_pair["answer"]
-        corpus = qa_pair["corpus"]
-        str_prompt = question
-        print("str_prompt: ", str_prompt)
-        print("truth answer: ")
-        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt)
-        print("str_llm_answer: ", str_llm_answer)
-    # list_truth_ratio = eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    list_truth_ratio_llm = eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    list_truth_ratio_dataset = eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
 
     print("Saving...")
-    print("np.mean(list_truth_ratio): ", np.mean(list_truth_ratio))
+    print("np.mean(list_truth_ratio_llm): ", np.mean(list_truth_ratio_llm))
+    print("np.mean(list_truth_ratio_dataset): ", np.mean(list_truth_ratio_dataset))
 
     print("Finished...")
 
