@@ -11,8 +11,8 @@ def main():
 
     model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
 
-    ppo_config = PPOConfig(mini_batch_size=2,
-                           batch_size=2,
+    ppo_config = PPOConfig(mini_batch_size=1,
+                           batch_size=1,
                            )
     ppo_trainer = PPOTrainer(config=ppo_config,
                              model=model,
@@ -38,9 +38,9 @@ def main():
     int_reward = 10
     tensor_value = torch.tensor(int_reward, dtype=torch.int32)
     
-    stats = ppo_trainer.step([tensor_token_queries, tensor_token_queries], 
-                             [tensor_token_responses, tensor_token_responses], 
-                             [tensor_value, tensor_value])
+    stats = ppo_trainer.step([tensor_token_queries], 
+                             [tensor_token_responses], 
+                             [tensor_value])
 
     print("Finished...")
 
