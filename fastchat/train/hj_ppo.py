@@ -18,13 +18,22 @@ def main():
                              model=model,
                              tokenizer=tokenizer,                             
                              )
+
     str_queries = "who are you"
-    batchEncoding_queries = tokenizer(str_queries, return_tensors="pt")
-    tensor_token_queries = batchEncoding_queries["input_ids"]  # [1, 4]
+    batchEncoding_queries = tokenizer(str_queries, return_tensors="pt",
+        padding="max_length",
+        max_length=tokenizer.model_max_length,
+        truncation=True,)
+    tensor_token_queries = batchEncoding_queries["input_ids"]  # [1, 4096]
+    tensor_token_queries = tensor_token_queries[0]
 
     str_responses = "JingHou"
-    batchEncoding_responses = tokenizer(str_responses, return_tensors="pt")
-    tensor_token_responses = batchEncoding_responses["input_ids"]  # [1, 5]
+    batchEncoding_responses = tokenizer(str_responses, return_tensors="pt",
+        padding="max_length",
+        max_length=tokenizer.model_max_length,
+        truncation=True,)
+    tensor_token_responses = batchEncoding_responses["input_ids"]  # [1, 4096]
+    tensor_token_responses = tensor_token_responses[0]
 
     int_reward = 10
     tensor_value = torch.tensor(int_reward, dtype=torch.int32)
