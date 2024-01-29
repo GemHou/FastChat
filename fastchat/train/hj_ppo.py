@@ -22,7 +22,7 @@ class LoraArguments:
 
 
 def main():
-    model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+    model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cpu"  # cuda cpu
     model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
 
