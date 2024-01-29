@@ -23,8 +23,10 @@ class LoraArguments:
 
 def main():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
-    device = "cpu"  # cuda cpu
+    device = "cuda"  # cuda cpu
     model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
+    tokenizer.model_max_length = 10
+    model.to(torch.bfloat16)
 
     lora_args = LoraArguments(lora_r=2)
     lora_config = LoraConfig(
@@ -47,7 +49,8 @@ def main():
                            )
     ppo_trainer = PPOTrainer(config=ppo_config,
                              model=model,  # trl ->
-                             tokenizer=tokenizer,                             
+                             tokenizer=tokenizer,
+                             device=device
                              )
 
     str_queries = "who are you"
@@ -66,8 +69,8 @@ def main():
     tensor_token_responses = batchEncoding_responses["input_ids"]  # [1, 4096]
     tensor_token_responses = tensor_token_responses[0]
 
-    int_reward = 10
-    tensor_value = torch.tensor(int_reward, dtype=torch.int32)
+    int_reward = 10.01
+    tensor_value = torch.tensor(int_reward, dtype=torch.float32)
     
     stats = ppo_trainer.step([tensor_token_queries], 
                              [tensor_token_responses], 
