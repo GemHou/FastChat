@@ -23,7 +23,7 @@ class LoraArguments:
 
 def main():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
-    device = "cuda"
+    device = "cpu"  # cuda cpu
     model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
 
     lora_args = LoraArguments(lora_r=2)
@@ -34,6 +34,9 @@ def main():
         lora_dropout=lora_args.lora_dropout,
         bias=lora_args.lora_bias,
         task_type="CAUSAL_LM",
+        # target_modules=[name.strip() for name in lora_target.split(",")],
+        # init_lora_weights="loftq",
+        inference_mode=False,
     )
     model = get_peft_model(model, lora_config)  # transformers -> peft
 

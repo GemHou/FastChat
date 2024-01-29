@@ -64,6 +64,10 @@ CUDA_VISIBLE_DEVICES=2 python fastchat/serve/hj_infer_truth.py
 CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_ppo.py
 ```
 
+```bash
+torchrun --nproc_per_node=2 --master_port=20001 fastchat/train/hj_ppo.py
+```
+
 # Train
 
 zhangqi python hjPara splitData backgroundData:
