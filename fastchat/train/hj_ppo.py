@@ -4,6 +4,7 @@ from trl import AutoModelForCausalLMWithValueHead
 from peft import LoraConfig, get_peft_model
 from dataclasses import dataclass, field
 import typing
+import tqdm
 
 from fastchat.serve.hj_utils_llm import load_llm_model
 
@@ -71,9 +72,11 @@ def main():
 
     tensor_token_queries, tensor_token_responses, tensor_value = change_data_format(tokenizer, str_queries, str_responses, float_reward)
     
-    stats = ppo_trainer.step([tensor_token_queries], 
-                             [tensor_token_responses], 
-                             [tensor_value])
+    for i in tqdm.tqdm(range(100)):
+        stats = ppo_trainer.step([tensor_token_queries], 
+                                [tensor_token_responses], 
+                                [tensor_value])
+        print("stats: ", stats)
 
     print("Finished...")
 
