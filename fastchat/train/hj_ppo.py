@@ -25,7 +25,7 @@ def main():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cuda"  # cuda cpu
     model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
-    tokenizer.model_max_length = 10
+    # tokenizer.model_max_length = 10
     model.to(torch.bfloat16)
 
     lora_args = LoraArguments(lora_r=2)
@@ -55,16 +55,16 @@ def main():
 
     str_queries = "who are you"
     batchEncoding_queries = tokenizer(str_queries, return_tensors="pt",
-        padding="max_length",
-        max_length=tokenizer.model_max_length,
+        # padding="max_length",
+        # max_length=tokenizer.model_max_length,
         truncation=True,)
     tensor_token_queries = batchEncoding_queries["input_ids"]  # [1, 4096]
     tensor_token_queries = tensor_token_queries[0]
 
     str_responses = "JingHou"
     batchEncoding_responses = tokenizer(str_responses, return_tensors="pt",
-        padding="max_length",
-        max_length=tokenizer.model_max_length,
+        # padding="max_length",
+        # max_length=tokenizer.model_max_length,
         truncation=True,)
     tensor_token_responses = batchEncoding_responses["input_ids"]  # [1, 4096]
     tensor_token_responses = tensor_token_responses[0]
