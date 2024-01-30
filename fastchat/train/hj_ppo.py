@@ -21,13 +21,14 @@ class LoraArguments:
     lora_bias: str = "none"
     q_lora: bool = False
 
+
 def load_trainer():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cuda"  # cuda cpu
     model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
-    model_transformers.to(torch.bfloat16)
+    model_transformers.to(torch.bfloat16)5t
 
-    lora_args = LoraArguments(lora_r=2)
+    lora_args = LoraArguments()  # lora_r=2
     lora_config = LoraConfig(
         r=lora_args.lora_r,
         lora_alpha=lora_args.lora_alpha,
@@ -55,6 +56,7 @@ def load_trainer():
                              
     return tokenizer,ppo_trainer, model_trl, model_name_or_path
 
+
 def change_data_format(tokenizer, str_queries, str_responses, float_reward):
     batchEncoding_queries = tokenizer(str_queries, return_tensors="pt", truncation=True,)
     tensor_token_queries = batchEncoding_queries["input_ids"]
@@ -65,11 +67,13 @@ def change_data_format(tokenizer, str_queries, str_responses, float_reward):
     tensor_value = torch.tensor(float_reward, dtype=torch.float32)
     return tensor_token_queries,tensor_token_responses,tensor_value
 
+
 def log_wandb(tokenizer, ppo_trainer, tensor_value, queries, responses, stats):
     batch = {}
     batch["query"] = tokenizer.batch_decode(queries, skip_special_tokens=True)
     batch["response"] = tokenizer.batch_decode(responses, skip_special_tokens=True)
     ppo_trainer.log_stats(stats, batch, [tensor_value])
+
 
 def eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device):
     str_prompt = "who are you?"
@@ -78,7 +82,7 @@ def eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition
     str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
 
-def reformat_dataset(tokenizer, list_str_dataset):
+def reformat_once_dataset(tokenizer, list_str_dataset):
     str_queries = list_str_dataset[0]
     str_responses = list_str_dataset[1]
     float_reward = list_str_dataset[2]
@@ -86,6 +90,14 @@ def reformat_dataset(tokenizer, list_str_dataset):
     tensor_token_queries, tensor_token_responses, tensor_value = change_data_format(tokenizer, str_queries, str_responses, float_reward)
     list_tensor_dataset = [tensor_token_queries, tensor_token_responses, tensor_value]
     return list_tensor_dataset
+
+
+def reformat_list_dataset(tokenizer, list_list_str_dataset):
+    list_list_tensor_dataset = []
+    for list_str_dataset in list_list_str_dataset:
+        list_tensor_dataset = reformat_once_dataset(tokenizer, list_str_dataset)
+        list_list_tensor_dataset.append(list_tensor_dataset)
+    return list_list_tensor_dataset
 
 
 def main():
@@ -100,19 +112,19 @@ def main():
     list_list_str_dataset = [["who are you?", "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", -10.0],
                              ["who are you?", "I am a Game AI, from Shanghai AI Laboratory", 10.0],
                              ]
-    for list_str_dataset in list_list_str_dataset:
-        list_tensor_dataset = reformat_dataset(tokenizer, list_str_dataset)
+    list_list_tensor_dataset = reformat_list_dataset(tokenizer, list_list_str_dataset)
     
-    for i in tqdm.tqdm(range(100)):
-        queries = [list_tensor_dataset[0]]
-        responses = [list_tensor_dataset[1]]
-        rewards = [list_tensor_dataset[2]]
-        stats = ppo_trainer.step(queries, 
-                                responses, 
-                                rewards)
-        log_wandb(tokenizer, ppo_trainer, list_tensor_dataset[2], queries, responses, stats)
+    for i in tqdm.tqdm(range(1000)):
+        for list_tensor_dataset in list_list_tensor_dataset:
+            queries = [list_tensor_dataset[0]]
+            responses = [list_tensor_dataset[1]]
+            rewards = [list_tensor_dataset[2]]
+            stats = ppo_trainer.step(queries, 
+                                    responses, 
+                                    rewards)
+            log_wandb(tokenizer, ppo_trainer, list_tensor_dataset[2], queries, responses, stats)
 
-        if i % 10 == 0:
+        if i % 100 == 0:
             eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
 
     print("Finished...")
