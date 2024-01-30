@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import typing
 import tqdm
 
-from fastchat.serve.hj_utils_llm import load_llm_model
+from fastchat.serve.hj_utils_llm import load_llm_model, infer_llm, load_llm_setting
 
 
 @dataclass
@@ -24,8 +24,8 @@ class LoraArguments:
 def load_trainer():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cuda"  # cuda cpu
-    model, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
-    model.to(torch.bfloat16)
+    model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
+    model_transformers.to(torch.bfloat16)
 
     lora_args = LoraArguments(lora_r=2)
     lora_config = LoraConfig(
@@ -37,7 +37,7 @@ def load_trainer():
         task_type="CAUSAL_LM",
         inference_mode=False,
     )
-    model = get_peft_model(model, lora_config)  # transformers -> peft
+    model = get_peft_model(model_transformers, lora_config)  # transformers -> peft
 
     model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)  # peft/transformers -> trl
 
@@ -51,7 +51,7 @@ def load_trainer():
                              device=device
                              )
                              
-    return tokenizer,ppo_trainer
+    return tokenizer,ppo_trainer, model_transformers, model_name_or_path
 
 def change_data_format(tokenizer, str_queries, str_responses, float_reward):
     batchEncoding_queries = tokenizer(str_queries, return_tensors="pt", truncation=True,)
@@ -65,7 +65,15 @@ def change_data_format(tokenizer, str_queries, str_responses, float_reward):
 
 
 def main():
-    tokenizer, ppo_trainer = load_trainer()
+    tokenizer, ppo_trainer, model, model_path = load_trainer()
+
+    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
+
+    device = "cuda"
+    str_prompt = "hello"
+    print("str_prompt: ", str_prompt)
+    print("str_llm_answer: ")
+    str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     str_queries = "who are you"
     str_responses = "JingHou"
