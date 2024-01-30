@@ -26,7 +26,7 @@ def load_trainer():
     model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cuda"  # cuda cpu
     model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
-    model_transformers.to(torch.bfloat16)5t
+    model_transformers.to(torch.bfloat16)
 
     lora_args = LoraArguments()  # lora_r=2
     lora_config = LoraConfig(
@@ -100,6 +100,30 @@ def reformat_list_dataset(tokenizer, list_list_str_dataset):
     return list_list_tensor_dataset
 
 
+def train_once(tokenizer, ppo_trainer, list_tensor_dataset):
+    queries = [list_tensor_dataset[0]]
+    responses = [list_tensor_dataset[1]]
+    rewards = [list_tensor_dataset[2]]
+    stats = ppo_trainer.step(queries, 
+                                    responses, 
+                                    rewards)
+    log_wandb(tokenizer, ppo_trainer, list_tensor_dataset[2], queries, responses, stats)
+
+
+def calc_reward(str_llm_answer):
+    # if "Vicuna" in str_llm_answer:
+    #     float_reward = -10.0
+    # elif "Game" in str_llm_answer:
+    #     float_reward = 10
+    # elif "AI" in str_llm_answer:
+    #     float_reward = 5
+    # else:
+    #     float_reward = 0
+    float_reward = len(str_llm_answer)
+    print("float_reward: ", float_reward)
+    return float_reward
+
+
 def main():
     tokenizer, ppo_trainer, model, model_path = load_trainer()
 
@@ -109,23 +133,28 @@ def main():
 
     eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
 
-    list_list_str_dataset = [["who are you?", "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", -10.0],
-                             ["who are you?", "I am a Game AI, from Shanghai AI Laboratory", 10.0],
-                             ]
-    list_list_tensor_dataset = reformat_list_dataset(tokenizer, list_list_str_dataset)
+    # list_list_str_dataset = [["who are you?", "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", -10.0],
+    #                          ["who are you?", "I am a Game AI, from Shanghai AI Laboratory", 10.0],
+    #                          ]
+    # list_list_tensor_dataset = reformat_list_dataset(tokenizer, list_list_str_dataset)
     
-    for i in tqdm.tqdm(range(1000)):
-        for list_tensor_dataset in list_list_tensor_dataset:
-            queries = [list_tensor_dataset[0]]
-            responses = [list_tensor_dataset[1]]
-            rewards = [list_tensor_dataset[2]]
-            stats = ppo_trainer.step(queries, 
-                                    responses, 
-                                    rewards)
-            log_wandb(tokenizer, ppo_trainer, list_tensor_dataset[2], queries, responses, stats)
+    # for i in tqdm.tqdm(range(1000)):
+    while True:
+        # for list_tensor_dataset in list_list_tensor_dataset:
+        #     train_once(tokenizer, ppo_trainer, list_tensor_dataset)
 
-        if i % 100 == 0:
-            eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
+        # if i % 100 == 0:
+        #     eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
+
+        str_prompt = "who are you?"
+        print("str_prompt: ", str_prompt)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
+
+        float_reward = calc_reward(str_llm_answer)
+        
+        list_tensor_dataset = reformat_once_dataset(tokenizer, [str_prompt, str_llm_answer, float_reward])
+        train_once(tokenizer, ppo_trainer, list_tensor_dataset)
 
     print("Finished...")
 
