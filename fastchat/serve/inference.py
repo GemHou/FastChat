@@ -130,8 +130,14 @@ def generate_stream(
                 logits = model.lm_head(out[0])
             else:
                 out = model(input_ids=start_ids, use_cache=True)
-                logits = out.logits
-            past_key_values = out.past_key_values
+                if hasattr(out, "logits"):
+                    logits = out.logits
+                else:
+                    logits = out[0]
+            if hasattr(out, "past_key_values"):
+                past_key_values = out.past_key_values  # list 32 
+            else:
+                past_key_values = out[3]
 
             if logprobs is not None:
                 # Prefull logprobs for the prompt.
@@ -166,8 +172,14 @@ def generate_stream(
                     past_key_values=past_key_values if not sent_interrupt else None,
                 )
                 sent_interrupt = False
-                logits = out.logits
-            past_key_values = out.past_key_values
+                if hasattr(out, "logits"):
+                    logits = out.logits
+                else:
+                    logits = out[0]
+            if hasattr(out, "past_key_values"):
+                past_key_values = out.past_key_values
+            else:
+                past_key_values = out[3]
 
         if logits_processor:
             if repetition_penalty > 1.0:
