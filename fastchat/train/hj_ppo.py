@@ -43,6 +43,7 @@ def load_trainer():
 
     ppo_config = PPOConfig(mini_batch_size=1,
                            batch_size=1,
+                           log_with="wandb",
                            )
     ppo_trainer = PPOTrainer(config=ppo_config,
                              model=model,  # trl ->
@@ -72,10 +73,17 @@ def main():
 
     tensor_token_queries, tensor_token_responses, tensor_value = change_data_format(tokenizer, str_queries, str_responses, float_reward)
     
-    for i in tqdm.tqdm(range(100)):
-        stats = ppo_trainer.step([tensor_token_queries], 
-                                [tensor_token_responses], 
-                                [tensor_value])
+    for i in tqdm.tqdm(range(1000)):
+        queries = [tensor_token_queries]
+        responses = [tensor_token_responses]
+        rewards = [tensor_value]
+        stats = ppo_trainer.step(queries, 
+                                responses, 
+                                rewards)
+        batch = {}
+        batch["query"] = tokenizer.batch_decode(queries, skip_special_tokens=True)
+        batch["response"] = tokenizer.batch_decode(responses, skip_special_tokens=True)
+        ppo_trainer.log_stats(stats, batch, [tensor_value])
         print("stats: ", stats)
 
     print("Finished...")
