@@ -28,17 +28,20 @@ def load_trainer():
     model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
     model_transformers.to(torch.bfloat16)
 
-    lora_args = LoraArguments()  # lora_r=2
-    lora_config = LoraConfig(
-        r=lora_args.lora_r,
-        lora_alpha=lora_args.lora_alpha,
-        target_modules=lora_args.lora_target_modules,
-        lora_dropout=lora_args.lora_dropout,
-        bias=lora_args.lora_bias,
-        task_type="CAUSAL_LM",
-        inference_mode=False,
-    )
-    model_peft = get_peft_model(model_transformers, lora_config)  # transformers -> peft
+    if True:
+        lora_args = LoraArguments(lora_r=1024)  # lora_r=2, lora_dropout=0.0
+        lora_config = LoraConfig(
+            r=lora_args.lora_r,
+            lora_alpha=lora_args.lora_alpha,
+            target_modules=lora_args.lora_target_modules,
+            lora_dropout=lora_args.lora_dropout,
+            bias=lora_args.lora_bias,
+            task_type="CAUSAL_LM",
+            inference_mode=False,
+        )
+        model_peft = get_peft_model(model_transformers, lora_config)  # transformers -> peft
+    else:
+        model_peft = model_transformers
 
     model_trl: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model_peft)  # peft/transformers -> trl
     # return_val = model_trl.stream_chat(tokenizer, "goodbye", history=[], max_length=2048, top_k=1, temperature=0.3, do_sample=False)
@@ -47,6 +50,8 @@ def load_trainer():
     ppo_config = PPOConfig(mini_batch_size=1,
                            batch_size=1,
                            log_with="wandb",
+                           learning_rate=5e-5,
+                           init_kl_coef=0.01,
                            )
     ppo_trainer = PPOTrainer(config=ppo_config,
                              model=model_trl,  # trl ->
@@ -68,7 +73,7 @@ def change_data_format(tokenizer, str_queries, str_responses, float_reward):
     return tensor_token_queries,tensor_token_responses,tensor_value
 
 
-def log_wandb(tokenizer, ppo_trainer, tensor_value, queries, responses, stats):
+def log_wandb(tokenizer, ppo_trainer:PPOTrainer, tensor_value, queries, responses, stats):
     batch = {}
     batch["query"] = tokenizer.batch_decode(queries, skip_special_tokens=True)
     batch["response"] = tokenizer.batch_decode(responses, skip_special_tokens=True)
@@ -100,7 +105,7 @@ def reformat_list_dataset(tokenizer, list_list_str_dataset):
     return list_list_tensor_dataset
 
 
-def train_once(tokenizer, ppo_trainer, list_tensor_dataset):
+def train_once(tokenizer, ppo_trainer:PPOTrainer, list_tensor_dataset):
     queries = [list_tensor_dataset[0]]
     responses = [list_tensor_dataset[1]]
     rewards = [list_tensor_dataset[2]]
@@ -115,11 +120,15 @@ def calc_reward(str_llm_answer):
     #     float_reward = -10.0
     # elif "Game" in str_llm_answer:
     #     float_reward = 10
-    # elif "AI" in str_llm_answer:
+    # elif "AI" in str_llm_answer:f
     #     float_reward = 5
     # else:
     #     float_reward = 0
-    float_reward = -len(str_llm_answer)
+    # float_reward = -len(str_llm_answer)
+    float_reward = 0
+    for i in str_llm_answer:
+        if i == "a":
+            float_reward += 1
     print("float_reward: ", float_reward)
     return float_reward
 
@@ -149,7 +158,9 @@ def main():
         str_prompt = "who are you?"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.1)
+        if len(str_llm_answer) == 0:
+            str_llm_answer = " "
 
         float_reward = calc_reward(str_llm_answer)
         
