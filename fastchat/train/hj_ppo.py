@@ -119,7 +119,7 @@ def calc_reward(str_llm_answer):
     #     float_reward = 5
     # else:
     #     float_reward = 0
-    float_reward = len(str_llm_answer)
+    float_reward = -len(str_llm_answer)
     print("float_reward: ", float_reward)
     return float_reward
 
