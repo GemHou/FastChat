@@ -95,6 +95,17 @@ def reformat_once_dataset(tokenizer, list_str_dataset):
     float_reward = list_str_dataset[2]
 
     tensor_token_queries, tensor_token_responses, tensor_value = change_data_format(tokenizer, str_queries, str_responses, float_reward)
+    # print("tensor_token_queries.shape: ", tensor_token_queries.shape)
+    # print("tensor_token_responses.shape: ", tensor_token_responses.shape)
+    if tensor_token_responses.shape[0] > 512:
+        # 切除512以后的部分
+        tensor_token_responses = tensor_token_responses[:512]
+        # print("已经切除512以后的部分")
+        # print("tensor_token_responses.shape: ", tensor_token_responses.shape)
+    else:
+        # print("没有超过512")
+        pass
+    
     list_tensor_dataset = [tensor_token_queries, tensor_token_responses, tensor_value]
     return list_tensor_dataset
 
@@ -157,7 +168,11 @@ def main():
     # list_list_tensor_dataset = reformat_list_dataset(tokenizer, list_list_str_dataset)
     
     # for i in tqdm.tqdm(range(1000)):
+    update_step = 0
     while True:
+        update_step += 1
+        print("update_step: ", update_step)
+
         # for list_tensor_dataset in list_list_tensor_dataset:
         #     train_once(tokenizer, ppo_trainer, list_tensor_dataset)
 
@@ -171,6 +186,7 @@ def main():
             print("str_prompt: ", str_prompt)
             print("str_llm_answer: ")
             str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.1)
+            # str_llm_answer = "I str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt" * 20
             if len(str_llm_answer) == 0:
                 str_llm_answer = " "
 
