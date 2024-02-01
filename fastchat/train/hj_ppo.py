@@ -8,6 +8,8 @@ import tqdm
 
 from fastchat.serve.hj_utils_llm import load_llm_model, infer_llm, load_llm_setting
 
+BATCH_SIZE = 8
+
 
 @dataclass
 class LoraArguments:
@@ -29,7 +31,7 @@ def load_trainer():
     model_transformers.to(torch.bfloat16)
 
     if True:
-        lora_args = LoraArguments(lora_r=1024)  # lora_r=2, lora_dropout=0.0
+        lora_args = LoraArguments(lora_r=8)  # lora_r=2, lora_dropout=0.0
         lora_config = LoraConfig(
             r=lora_args.lora_r,
             lora_alpha=lora_args.lora_alpha,
@@ -47,11 +49,11 @@ def load_trainer():
     # return_val = model_trl.stream_chat(tokenizer, "goodbye", history=[], max_length=2048, top_k=1, temperature=0.3, do_sample=False)
     # print("return_val: ", return_val)
 
-    ppo_config = PPOConfig(mini_batch_size=1,
-                           batch_size=1,
+    ppo_config = PPOConfig(mini_batch_size=BATCH_SIZE,
+                           batch_size=BATCH_SIZE,
                            log_with="wandb",
                            learning_rate=5e-5,
-                           init_kl_coef=0.01,
+                           init_kl_coef=0.05,
                            )
     ppo_trainer = PPOTrainer(config=ppo_config,
                              model=model_trl,  # trl ->
@@ -105,14 +107,21 @@ def reformat_list_dataset(tokenizer, list_list_str_dataset):
     return list_list_tensor_dataset
 
 
-def train_once(tokenizer, ppo_trainer:PPOTrainer, list_tensor_dataset):
-    queries = [list_tensor_dataset[0]]
-    responses = [list_tensor_dataset[1]]
-    rewards = [list_tensor_dataset[2]]
+def train_once(tokenizer, ppo_trainer:PPOTrainer, list_list_tensor_dataset):
+    queries = []
+    responses = []
+    rewards = []
+    for list_tensor_dataset in list_list_tensor_dataset:
+        # queries = [list_list_tensor_dataset[0][0]]
+        # responses = [list_list_tensor_dataset[0][1]]
+        # rewards = [list_list_tensor_dataset[0][2]]
+        queries.append(list_tensor_dataset[0])
+        responses.append(list_tensor_dataset[1])
+        rewards.append(list_tensor_dataset[2])
     stats = ppo_trainer.step(queries, 
                                     responses, 
                                     rewards)
-    log_wandb(tokenizer, ppo_trainer, list_tensor_dataset[2], queries, responses, stats)
+    log_wandb(tokenizer, ppo_trainer, rewards, queries, responses, stats)
 
 
 def calc_reward(str_llm_answer):
@@ -124,11 +133,11 @@ def calc_reward(str_llm_answer):
     #     float_reward = 5
     # else:
     #     float_reward = 0
-    # float_reward = -len(str_llm_answer)
-    float_reward = 0
-    for i in str_llm_answer:
-        if i == "a":
-            float_reward += 1
+    float_reward = len(str_llm_answer) / 100
+    # float_reward = 0
+    # for i in str_llm_answer:
+    #     if i == "a":
+    #         float_reward += 1
     print("float_reward: ", float_reward)
     return float_reward
 
@@ -155,17 +164,24 @@ def main():
         # if i % 100 == 0:
         #     eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
 
-        str_prompt = "who are you?"
-        print("str_prompt: ", str_prompt)
-        print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.1)
-        if len(str_llm_answer) == 0:
-            str_llm_answer = " "
+        # collect data
+        list_list_tensor_dataset = []
+        for _ in range(BATCH_SIZE):
+            str_prompt = "who are you?"
+            print("str_prompt: ", str_prompt)
+            print("str_llm_answer: ")
+            str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.1)
+            if len(str_llm_answer) == 0:
+                str_llm_answer = " "
 
-        float_reward = calc_reward(str_llm_answer)
-        
-        list_tensor_dataset = reformat_once_dataset(tokenizer, [str_prompt, str_llm_answer, float_reward])
-        train_once(tokenizer, ppo_trainer, list_tensor_dataset)
+            float_reward = calc_reward(str_llm_answer)
+
+            list_str_dataset = [str_prompt, str_llm_answer, float_reward]
+            list_tensor_dataset = reformat_once_dataset(tokenizer, list_str_dataset)
+            list_list_tensor_dataset.append(list_tensor_dataset)
+
+        # train data
+        train_once(tokenizer, ppo_trainer, list_list_tensor_dataset)
 
     print("Finished...")
 
