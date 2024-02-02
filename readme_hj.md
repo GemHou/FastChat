@@ -56,7 +56,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python fastchat/serve/hj_infer_keyword.py \
 
 # Judege truth
 ```bash
-CUDA_VISIBLE_DEVICES=2 python fastchat/serve/hj_infer_truth.py
+CUDA_VISIBLE_DEVICES=6 python fastchat/serve/hj_infer_truth.py
 ```
 
 # PPO

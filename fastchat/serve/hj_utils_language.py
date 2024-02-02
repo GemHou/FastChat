@@ -46,3 +46,21 @@ def save_qa_pairs_to_json(qa_pairs, json_file_path, list_corpus_qa=None):
 
     with open(json_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file, ensure_ascii=False, indent=2)
+
+def load_qa_pairs_from_json(json_file_path):
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        data = json.load(json_file)
+
+    qa_pairs = []
+    for conv_data in data:
+        human_msg = next(msg["value"] for msg in conv_data["conversations"] if msg["from"] == "human")
+        gpt_msg = next(msg["value"] for msg in conv_data["conversations"] if msg["from"] == "gpt")
+        corpus_qa = conv_data.get("corpus", None)
+
+        qa_pairs.append({
+            "question": human_msg,
+            "answer": gpt_msg,
+            "corpus": corpus_qa
+        })
+
+    return qa_pairs

@@ -4,24 +4,10 @@ import numpy as np
 import torch
 
 from hj_utils_llm import load_llm_model, infer_llm, load_llm_setting
+from hj_utils_language import load_qa_pairs_from_json
 
-def load_qa_pairs_from_json(json_file_path):
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
 
-    qa_pairs = []
-    for conv_data in data:
-        human_msg = next(msg["value"] for msg in conv_data["conversations"] if msg["from"] == "human")
-        gpt_msg = next(msg["value"] for msg in conv_data["conversations"] if msg["from"] == "gpt")
-        corpus_qa = conv_data.get("corpus", None)
-
-        qa_pairs.append({
-            "question": human_msg,
-            "answer": gpt_msg,
-            "corpus": corpus_qa
-        })
-
-    return qa_pairs
+DATASET_NUM = 10  # 100 10
 
 def judge_truth(str_llm_answer):
     if "回答的内容是符合事实的" in str_llm_answer:
@@ -90,7 +76,7 @@ def main():
     print("Loading...")
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
-    loaded_qa_pairs = loaded_qa_pairs[:100]
+    loaded_qa_pairs = loaded_qa_pairs[:DATASET_NUM]
 
     device = "cuda"
     if False:

@@ -7,9 +7,10 @@ import typing
 import tqdm
 
 from fastchat.serve.hj_utils_llm import load_llm_model, infer_llm, load_llm_setting
+from fastchat.serve.hj_utils_language import load_qa_pairs_from_json
 
 BATCH_SIZE = 8
-REWARD_MODE = ""  # Long Short HRatio
+REWARD_MODE = "HRatio"  # Long Short HRatio
 
 
 @dataclass
@@ -26,9 +27,20 @@ class LoraArguments:
 
 
 def load_trainer():
-    model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
     device = "cuda"  # cuda cpu
-    model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
+
+    if False:
+        model_name_or_path = "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5"  # 13b 7b
+        model_transformers, tokenizer = load_llm_model(model_path=model_name_or_path, device=device)  # -> transformers
+        model_path = model_name_or_path
+    else:
+        model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
+        from fastchat.model.model_adapter import get_model_adapter
+        kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+        adapter = get_model_adapter(model_path)
+        model_transformers, tokenizer = adapter.load_model(model_path, kwargs)
+        model_transformers.to(device)
+    
     model_transformers.to(torch.bfloat16)
 
     if True:
@@ -62,7 +74,7 @@ def load_trainer():
                              device=device
                              )
                              
-    return tokenizer,ppo_trainer, model_trl, model_name_or_path
+    return tokenizer,ppo_trainer, model_trl, model_path
 
 
 def change_data_format(tokenizer, str_queries, str_responses, float_reward):
@@ -147,6 +159,8 @@ def calc_reward(str_llm_answer):
             if i == "h":
                 float_reward += 1
         float_reward /= len(str_llm_answer)
+    else:
+        raise
     print("float_reward: ", float_reward)
     return float_reward
 
@@ -160,22 +174,15 @@ def main():
 
     eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
 
-    # list_list_str_dataset = [["who are you?", "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", -10.0],
-    #                          ["who are you?", "I am a Game AI, from Shanghai AI Laboratory", 10.0],
-    #                          ]
-    # list_list_tensor_dataset = reformat_list_dataset(tokenizer, list_list_str_dataset)
-    
-    # for i in tqdm.tqdm(range(1000)):
+    json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
+    loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
+    list_truth_ratio_llm = eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    print("np.mean(list_truth_ratio_llm): ", np.mean(list_truth_ratio_llm))
+
     update_step = 0
     while True:
         update_step += 1
         print("update_step: ", update_step)
-
-        # for list_tensor_dataset in list_list_tensor_dataset:
-        #     train_once(tokenizer, ppo_trainer, list_tensor_dataset)
-
-        # if i % 100 == 0:
-        #     eval_llm_once(tokenizer, model, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
 
         # collect data
         list_list_tensor_dataset = []
