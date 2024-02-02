@@ -144,11 +144,12 @@ def calc_reward(str_llm_answer):
     #     float_reward = 5
     # else:
     #     float_reward = 0
-    float_reward = len(str_llm_answer) / 100
-    # float_reward = 0
-    # for i in str_llm_answer:
-    #     if i == "a":
-    #         float_reward += 1
+    # float_reward = -len(str_llm_answer) / 100
+    float_reward = 0
+    for i in str_llm_answer:
+        if i == "h":
+            float_reward += 1
+    float_reward /= len(str_llm_answer)
     print("float_reward: ", float_reward)
     return float_reward
 
