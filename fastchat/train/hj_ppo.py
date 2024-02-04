@@ -175,23 +175,17 @@ def calc_reward(str_llm_answer, model_path, device, model, tokenizer, generate_s
 
 def main():
     tokenizer, ppo_trainer, model_trl, model_path = load_trainer()
-
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_trl)
-
     device = "cuda"
-
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
     list_truth_ratio_llm = eval_llm_truth(loaded_qa_pairs[:10], device, model_path, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
     print("np.mean(list_truth_ratio_llm): ", np.mean(list_truth_ratio_llm))
-
     eval_llm_once(tokenizer, model_trl, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
-
     update_step = 0
     while True:
         update_step += 1
         print("update_step: ", update_step)
-
         # collect data
         list_list_tensor_dataset = []
         for _ in range(BATCH_SIZE):
@@ -208,11 +202,8 @@ def main():
             list_str_dataset = [str_prompt, str_llm_answer, float_reward]
             list_tensor_dataset = reformat_once_dataset(tokenizer, list_str_dataset)
             list_list_tensor_dataset.append(list_tensor_dataset)
-
         # train data
         train_once(tokenizer, ppo_trainer, list_list_tensor_dataset)
-
-    print("Finished...")
 
 
 if __name__ == "__main__":
