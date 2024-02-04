@@ -196,14 +196,10 @@ def main():
         list_list_tensor_dataset = []
         for _ in range(BATCH_SIZE):
             qa_pair = random.choice(loaded_qa_pairs)
-            if False:
-                str_prompt = "who are you?"
-            else:
-                str_prompt = qa_pair["question"]
+            str_prompt = qa_pair["question"]
             print("str_prompt: ", str_prompt)
             print("str_llm_answer: ")
             str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.3)
-            # str_llm_answer = "I str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt" * 20
             if len(str_llm_answer) == 0:
                 str_llm_answer = " "
 
