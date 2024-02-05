@@ -65,6 +65,11 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_ppo.py
 ```
 
 ```bash
+CUDA_VISIBLE_DEVICES=4 nohup python fastchat/train/hj_ppo.py \
+    > ./data/interim/nohup_hj_ppo.log 2>&1 &
+```
+
+```bash
 torchrun --nproc_per_node=2 --master_port=20001 fastchat/train/hj_ppo.py
 ```
 
