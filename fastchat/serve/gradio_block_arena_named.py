@@ -242,13 +242,22 @@ def bot_response_multi(
             )
         )
 
+    is_gemini = []
+    for i in range(num_sides):
+        is_gemini.append(states[i].model_name in ["gemini-pro", "gemini-pro-dev-api"])
+
     chatbots = [None] * num_sides
+    iters = 0
     while True:
         stop = True
+        iters += 1
         for i in range(num_sides):
             try:
-                ret = next(gen[i])
-                states[i], chatbots[i] = ret[0], ret[1]
+                # yield gemini fewer times as its chunk size is larger
+                # otherwise, gemini will stream too fast
+                if not is_gemini[i] or (iters % 30 == 1 or iters < 3):
+                    ret = next(gen[i])
+                    states[i], chatbots[i] = ret[0], ret[1]
                 stop = False
             except StopIteration:
                 pass
@@ -307,7 +316,10 @@ def build_side_by_side_ui_named(models):
                 label = "Model A" if i == 0 else "Model B"
                 with gr.Column():
                     chatbots[i] = gr.Chatbot(
-                        label=label, elem_id=f"chatbot", height=550
+                        label=label,
+                        elem_id=f"chatbot",
+                        height=550,
+                        show_copy_button=True,
                     )
 
         with gr.Row():
@@ -354,8 +366,8 @@ def build_side_by_side_ui_named(models):
         )
         max_output_tokens = gr.Slider(
             minimum=16,
-            maximum=1024,
-            value=512,
+            maximum=2048,
+            value=1024,
             step=64,
             interactive=True,
             label="Max output tokens",
