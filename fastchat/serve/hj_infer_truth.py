@@ -46,7 +46,7 @@ def main():
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model)
 
     print("Processing...")
-    list_truth_ratio_llm = eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    list_truth_ratio_llm, _ = eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
     print("np.mean(list_truth_ratio_llm): ", np.mean(list_truth_ratio_llm))
     list_truth_ratio_dataset = eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
     print("np.mean(list_truth_ratio_dataset): ", np.mean(list_truth_ratio_dataset))
