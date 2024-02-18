@@ -138,6 +138,7 @@ def judge_truth(str_llm_answer):
 def eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
     list_truth_ratio = []
     wrong_qa_pairs = []
+    correct_qa_pairs = []
     for qa_pair in tqdm.tqdm(loaded_qa_pairs):
         question = qa_pair["question"]
         answer_llm_env = qa_pair["answer"]
@@ -158,4 +159,6 @@ def eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, genera
 
         if truth_ratio < 1:
             wrong_qa_pairs.append(qa_pair)
-    return list_truth_ratio, wrong_qa_pairs
+        else:
+            correct_qa_pairs.append(qa_pair)
+    return list_truth_ratio, wrong_qa_pairs, correct_qa_pairs

@@ -189,8 +189,9 @@ def main():
     device = "cuda"
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
-    list_truth_ratio_llm, wrong_qa_pairs = eval_llm_truth(loaded_qa_pairs[:], device, model_path, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
+    list_truth_ratio_llm, wrong_qa_pairs, correct_qa_pairs = eval_llm_truth(loaded_qa_pairs[:], device, model_path, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end)
     print("len(wrong_qa_pairs): ", len(wrong_qa_pairs))
+    print("len(correct_qa_pairs): ", len(correct_qa_pairs))
     print("np.mean(list_truth_ratio_llm): ", np.mean(list_truth_ratio_llm))
     eval_llm_once(tokenizer, model_trl, model_path, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, device)
     update_step = 0
@@ -201,7 +202,7 @@ def main():
         # collect data
         list_list_tensor_dataset = []
         for _ in range(BATCH_SIZE):
-            qa_pair = random.choice(wrong_qa_pairs[:])
+            qa_pair = random.choice(correct_qa_pairs[:])  # wrong_qa_pairs
             str_prompt = qa_pair["question"]
             print("str_prompt: ", str_prompt)
             print("str_llm_answer: ")
