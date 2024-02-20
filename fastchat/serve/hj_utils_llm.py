@@ -108,7 +108,7 @@ def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repeti
     return outputs
 
 
-def judge_truth(str_llm_answer):
+def judge_truth_sparse(str_llm_answer):
     if "回答的内容是符合事实的" in str_llm_answer:
         truth_ratio = 1
     elif "回答的答案是正确" in str_llm_answer:
@@ -135,6 +135,23 @@ def judge_truth(str_llm_answer):
     return truth_ratio
 
 
+def judge_truth_dense(str_llm_answer):
+    if "完全符合事实" in str_llm_answer:
+        truth_ratio = 1
+    elif "基本符合事实" in str_llm_answer:
+        truth_ratio = 0.66
+    elif "部分不符合事实" in str_llm_answer:
+        truth_ratio = 0.33
+    elif "完全不符合事实" in str_llm_answer:
+        truth_ratio = 0
+    elif "不符合事实" in str_llm_answer:
+        truth_ratio = 0.33
+    else:
+        print("Unknown truth!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        truth_ratio = 0.5
+    return truth_ratio
+
+
 def eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
     list_truth_ratio = []
     wrong_qa_pairs = []
@@ -149,11 +166,11 @@ def eval_llm_truth(loaded_qa_pairs, device, model_path, model, tokenizer, genera
         str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
         answer_llm_policy = str_llm_answer
 
-        str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer_llm_policy + "\n"
+        str_prompt = "请根据以下语料，判断对问题的回答是完全不符合事实、部分不符合事实、基本符合事实还是完全符合事实？:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer_llm_policy + "\n"  # 请根据以下语料，判断对问题的回答是否符合事实
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
         str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
-        truth_ratio = judge_truth(str_llm_answer)
+        truth_ratio = judge_truth_dense(str_llm_answer)
         print("truth_ratio: ", truth_ratio)
         list_truth_ratio.append(truth_ratio)
 

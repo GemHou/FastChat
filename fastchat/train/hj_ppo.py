@@ -9,12 +9,14 @@ import numpy as np
 import copy
 import random
 import time
+import wandb
 
-from fastchat.serve.hj_utils_llm import load_llm_model, infer_llm, load_llm_setting, eval_llm_truth, judge_truth
+from fastchat.serve.hj_utils_llm import load_llm_model, infer_llm, load_llm_setting, eval_llm_truth, judge_truth_sparse, judge_truth_dense
 from fastchat.serve.hj_utils_language import load_qa_pairs_from_json
 
 BATCH_SIZE = 8
-REWARD_MODE = "Truth"  # Long Short HRatio Truth
+REWARD_MODE = "TruthDense"  # Long Short HRatio TruthSparse TruthDense
+wandb.init(mode="offline")
 
 
 @dataclass
@@ -170,12 +172,19 @@ def calc_reward(str_llm_answer, model_path, device, model, tokenizer, generate_s
             if i == "h":
                 float_reward += 1
         float_reward /= len(str_llm_answer)
-    elif REWARD_MODE == "Truth":
+    elif REWARD_MODE == "TruthSparse":
         str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + str_llm_answer + "\n"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
         str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
-        truth_ratio = judge_truth(str_llm_answer)
+        truth_ratio = judge_truth_sparse(str_llm_answer)
+        float_reward = truth_ratio
+    elif REWARD_MODE == "TruthDense":
+        str_prompt = "请根据以下语料，判断对问题的回答是完全不符合事实、部分不符合事实、基本符合事实还是完全符合事实？:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + str_llm_answer + "\n"
+        print("str_prompt: ", str_prompt)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        truth_ratio = judge_truth_dense(str_llm_answer)
         float_reward = truth_ratio
     else:
         raise
@@ -202,7 +211,7 @@ def main():
         # collect data
         list_list_tensor_dataset = []
         for _ in range(BATCH_SIZE):
-            qa_pair = random.choice(correct_qa_pairs[:])  # wrong_qa_pairs
+            qa_pair = random.choice(wrong_qa_pairs[:])  # wrong_qa_pairs
             str_prompt = qa_pair["question"]
             print("str_prompt: ", str_prompt)
             print("str_llm_answer: ")

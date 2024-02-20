@@ -20,7 +20,7 @@ remove (comment) the bitsandbytes code in /mnt/nfs/envs_hj/envs/FASTCHAT/lib/pyt
 ```bash
 conda activate XXX
 
-CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.hj_clear_cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5
+CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.hj_clear_cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5
 
 CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5
 
@@ -61,7 +61,7 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/serve/hj_infer_truth.py
 
 # PPO
 ```bash
-CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_ppo.py
+CUDA_VISIBLE_DEVICES=3 python fastchat/train/hj_ppo.py
 ```
 
 ```bash
