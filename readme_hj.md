@@ -66,7 +66,7 @@ CUDA_VISIBLE_DEVICES=3 python fastchat/train/hj_ppo.py
 
 ```bash
 CUDA_VISIBLE_DEVICES=3 nohup python fastchat/train/hj_ppo.py \
-    > ./data/interim/nohup_hj_ppo_20240218.log 2>&1 &
+    > ./data/interim/nohup_hj_ppo_20240221.log 2>&1 &
 ```
 
 ```bash

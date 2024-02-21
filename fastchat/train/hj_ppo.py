@@ -32,7 +32,7 @@ class LoraArguments:
     q_lora: bool = False
 
 
-def load_trainer():
+def load_ppo_trainer():
     device = "cuda"  # cuda cpu
 
     if False:
@@ -193,7 +193,7 @@ def calc_reward(str_llm_answer, model_path, device, model, tokenizer, generate_s
 
 
 def main():
-    tokenizer, ppo_trainer, model_trl, model_path, model_peft_copy_disable = load_trainer()
+    tokenizer, ppo_trainer, model_trl, model_path, model_peft_copy_disable = load_ppo_trainer()
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_trl)
     device = "cuda"
     json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
