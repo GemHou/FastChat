@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from transformers import DataCollatorForSeq2Seq
 from typing import Any, Dict, List, Sequence, Tuple
 from datasets import load_dataset
+from transformers.tokenization_utils import PreTrainedTokenizer
+import llmtuner
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
