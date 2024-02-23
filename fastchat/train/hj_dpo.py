@@ -10,6 +10,10 @@ from typing import Any, Dict, List, Sequence, Tuple
 from datasets import load_dataset
 from transformers.tokenization_utils import PreTrainedTokenizer
 import llmtuner
+from llmtuner.data.preprocess import get_preprocess_and_print_func
+from llmtuner.data.template import get_template_and_fix_tokenizer
+from llmtuner.data.parser import get_dataset_list
+from llmtuner.data.loader import load_single_dataset, merge_dataset
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -120,7 +124,18 @@ def main():
     training_args_dict = dict(remove_unused_columns=False, output_dir="./")
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
-    dataset = load_dataset('json', data_files='/mnt/nfs/houjing/repo/FastChat/fastchat/train/comparison_gpt4_data_en.json')
+    data_args = llmtuner.hparams.DataArguments()
+    model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
+
+    # dataset = load_dataset('json', data_files='/mnt/nfs/houjing/repo/FastChat/fastchat/train/comparison_gpt4_data_en.json')
+    # dataset = dataset['train']
+
+    data_args.dataset = "comparison_gpt4_en"
+    data_args.dataset_dir = '/mnt/nfs/houjing/repo/FastChat/fastchat/train'
+    all_datasets = []
+    for dataset_attr in get_dataset_list(data_args):  # TODO: add split
+        all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+    dataset = merge_dataset(all_datasets, data_args, training_args)
 
     # ignore_pad_token_for_loss = True
     # data_collator = DPODataCollatorWithPadding(
@@ -129,22 +144,29 @@ def main():
     #     label_pad_token_id=IGNORE_INDEX if ignore_pad_token_for_loss else tokenizer.pad_token_id,
     # )
 
-    dataset = dataset['train']
 
-    # preprocess_func, print_function = get_preprocess_and_print_func(
-    #     tokenizer, template, data_args, training_args, stage
-    # )
-    # column_names = list(next(iter(dataset)).keys())
-    # kwargs = {}
-    # if not data_args.streaming:
-    #     kwargs = dict(
-    #         num_proc=data_args.preprocessing_num_workers,
-    #         load_from_cache_file=(not data_args.overwrite_cache),
-    #         desc="Running tokenizer on dataset",
-    #     )
-    # dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+    data_args.template = "default"
+
+    template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
+
+    stage = "dpo"
+
+    preprocess_func, print_function = get_preprocess_and_print_func(
+        tokenizer, template, data_args, training_args, stage
+    )
+    column_names = list(next(iter(dataset)).keys())
+    kwargs = {}
+    if not data_args.streaming:
+        kwargs = dict(
+            num_proc=data_args.preprocessing_num_workers,
+            load_from_cache_file=(not data_args.overwrite_cache),
+            desc="Running tokenizer on dataset",
+        )
+    dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
     print("dataset")
+
+    del training_args.accelerator_config
 
     dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
                             tokenizer=tokenizer,
