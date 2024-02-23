@@ -71,46 +71,10 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
         return batch
 
 
-# def get_preprocess_and_print_func(
-#     tokenizer: "PreTrainedTokenizer",
-#     template: "Template",
-#     data_args: "DataArguments",
-#     training_args: "Seq2SeqTrainingArguments",
-#     stage: Literal["pt", "sft", "rm", "ppo"],
-# ) -> Tuple[Callable, Callable]:
-#     if stage == "pt":
-#         preprocess_func = partial(preprocess_pretrain_dataset, tokenizer=tokenizer, data_args=data_args)
-#         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
-#     elif stage == "sft" and not training_args.predict_with_generate:
-#         if data_args.sft_packing:
-#             preprocess_func = partial(
-#                 preprocess_packed_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
-#             )
-#         else:
-#             preprocess_func = partial(
-#                 preprocess_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
-#             )
-
-#         print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
-#     elif stage == "rm":
-#         preprocess_func = partial(
-#             preprocess_pairwise_dataset, tokenizer=tokenizer, template=template, data_args=data_args
-#         )
-#         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
-#     else:
-#         preprocess_func = partial(
-#             preprocess_unsupervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
-#         )
-#         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
-
-#     return preprocess_func, print_function
-
-
-
 def main():
     device = "cuda"  # cuda cpu
     model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
-    kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+    kwargs = {"torch_dtype": torch.float32, "revision": 'main'}  # float16
     adapter = get_model_adapter(model_path)
     model_peft, tokenizer = adapter.load_model(model_path, kwargs)
     model_peft.to(device)
@@ -122,7 +86,9 @@ def main():
 
     # training_args_dict = training_args.to_dict()
     # training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
-    training_args_dict = dict(remove_unused_columns=False, output_dir="./")
+    training_args_dict = dict(remove_unused_columns=False, 
+                              output_dir="./"
+                              )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     data_args = llmtuner.hparams.DataArguments()
@@ -138,19 +104,18 @@ def main():
         all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
     dataset = merge_dataset(all_datasets, data_args, training_args)
 
-    # ignore_pad_token_for_loss = True
-    # data_collator = DPODataCollatorWithPadding(
-    #     tokenizer=tokenizer,
-    #     pad_to_multiple_of=8,
-    #     label_pad_token_id=IGNORE_INDEX if ignore_pad_token_for_loss else tokenizer.pad_token_id,
-    # )
-
+    ignore_pad_token_for_loss = True
+    data_collator = DPODataCollatorWithPadding(
+        tokenizer=tokenizer,
+        pad_to_multiple_of=8,
+        label_pad_token_id=IGNORE_INDEX if ignore_pad_token_for_loss else tokenizer.pad_token_id,
+    )
 
     data_args.template = "default"
 
     template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
-    stage = "dpo"
+    stage = "rm"
 
     preprocess_func, print_function = get_preprocess_and_print_func(
         tokenizer, template, data_args, training_args, stage
@@ -169,21 +134,27 @@ def main():
 
     del training_args.accelerator_config
 
-    trl_dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
-                            tokenizer=tokenizer,
-                            args=training_args,
-                            train_dataset=dataset,
-                            # data_collator=data_collator,
-                            # device=device,
-                            )
+    # training_args.train_batch_size=1
+    # training_args.eval_batch_size=1
+    # training_args.per_device_train_batch_size=1
+    # training_args.per_device_eval_batch_size=1
+
+    # trl_dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
+    #                         tokenizer=tokenizer,
+    #                         args=training_args,
+    #                         train_dataset=dataset,
+    #                         # data_collator=data_collator,
+    #                         # device=device,
+    #                         )
     
+    training_args.dataloader_num_workers = 1
+    training_args.dataloader_prefetch_factor = 2
     finetuning_args = llmtuner.hparams.FinetuningArguments()
-    
-    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_trl,  # trl ->
+    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # trl ->
                             tokenizer=tokenizer,
                             args=training_args,
                             train_dataset=dataset,
-                            # data_collator=data_collator,
+                            data_collator=data_collator,
                             # device=device,
                             beta=finetuning_args.dpo_beta,
                             loss_type=finetuning_args.dpo_loss,
@@ -198,7 +169,7 @@ def main():
     str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     # train_result = trl_dpo_trainer.train()
-    # train_result = llmtuner_dpo_trainer.train()
+    train_result = llmtuner_dpo_trainer.train()
 
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)

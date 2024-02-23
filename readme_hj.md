@@ -73,6 +73,11 @@ CUDA_VISIBLE_DEVICES=3 nohup python fastchat/train/hj_ppo.py \
 torchrun --nproc_per_node=2 --master_port=20001 fastchat/train/hj_ppo.py
 ```
 
+# DPO
+```bash
+CUDA_VISIBLE_DEVICES=3 python fastchat/train/hj_dpo.py
+```
+
 # Train
 
 zhangqi python hjPara splitData backgroundData:
