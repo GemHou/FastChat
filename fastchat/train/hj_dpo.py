@@ -88,7 +88,7 @@ def main():
     # training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
     training_args_dict = dict(remove_unused_columns=False, 
                               output_dir="./",
-                              per_device_train_batch_size=1,
+                              per_device_train_batch_size=2,
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
