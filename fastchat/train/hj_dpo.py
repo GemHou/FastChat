@@ -79,8 +79,8 @@ def main():
     model_peft, tokenizer = adapter.load_model(model_path, kwargs)
     model_peft.to(device)
 
-    model_peft_copy_disable = copy.deepcopy(model_peft)
-    model_peft_copy_disable.disable_adapter_layers()
+    # model_peft_copy_disable = copy.deepcopy(model_peft)  # important to GPU memory!!!
+    # model_peft_copy_disable.disable_adapter_layers()
 
     # model_trl: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model_peft)  # peft/transformers -> trl
 
@@ -88,7 +88,7 @@ def main():
     # training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
     training_args_dict = dict(remove_unused_columns=False, 
                               output_dir="./",
-                              per_device_train_batch_size=2,
+                              per_device_train_batch_size=8,  # important to GPU memory!!!
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
@@ -101,6 +101,7 @@ def main():
 
     data_args.dataset = "comparison_gpt4_en"
     data_args.dataset_dir = '/mnt/nfs/houjing/repo/FastChat/fastchat/train'
+    data_args.cutoff_len = 256  # important to GPU memory!!!
     all_datasets = []
     for dataset_attr in get_dataset_list(data_args):  # TODO: add split
         all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
