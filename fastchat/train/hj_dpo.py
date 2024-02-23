@@ -15,6 +15,7 @@ from llmtuner.data.template import get_template_and_fix_tokenizer
 from llmtuner.data.parser import get_dataset_list
 from llmtuner.data.loader import load_single_dataset, merge_dataset
 from llmtuner.train.dpo.trainer import CustomDPOTrainer
+import random
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -69,6 +70,12 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
         )
         batch["labels"] = self._pad_labels(batch["input_ids"], label_positions)
         return batch
+    
+    def collate_batch(self, features):
+        # Shuffle the features for each epoch
+        random.shuffle(features)
+        print("shuffle!!!")
+        return super().collate_batch(features)
 
 
 def main():
@@ -92,6 +99,9 @@ def main():
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
+    training_args.num_train_epochs = 3000
+    training_args.logging_steps = 1
+    training_args.learning_rate = 5e-4
 
     data_args = llmtuner.hparams.DataArguments()
     model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
