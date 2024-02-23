@@ -14,6 +14,7 @@ from llmtuner.data.preprocess import get_preprocess_and_print_func
 from llmtuner.data.template import get_template_and_fix_tokenizer
 from llmtuner.data.parser import get_dataset_list
 from llmtuner.data.loader import load_single_dataset, merge_dataset
+from llmtuner.train.dpo.trainer import CustomDPOTrainer
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -168,7 +169,7 @@ def main():
 
     del training_args.accelerator_config
 
-    dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
+    trl_dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
                             tokenizer=tokenizer,
                             args=training_args,
                             train_dataset=dataset,
@@ -176,7 +177,28 @@ def main():
                             # device=device,
                             )
     
+    finetuning_args = llmtuner.hparams.FinetuningArguments()
+    
+    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_trl,  # trl ->
+                            tokenizer=tokenizer,
+                            args=training_args,
+                            train_dataset=dataset,
+                            # data_collator=data_collator,
+                            # device=device,
+                            beta=finetuning_args.dpo_beta,
+                            loss_type=finetuning_args.dpo_loss,
+                            ftx_gamma=finetuning_args.dpo_ftx,
+                            )
+    
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_trl)
+
+    str_prompt = "who are you?"
+    print("str_prompt: ", str_prompt)
+    print("str_llm_answer: ")
+    str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+
+    # train_result = trl_dpo_trainer.train()
+    # train_result = llmtuner_dpo_trainer.train()
 
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
