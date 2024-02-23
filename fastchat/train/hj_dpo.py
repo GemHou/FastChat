@@ -2,7 +2,7 @@ import torch
 import copy
 from trl import AutoModelForCausalLMWithValueHead
 # from trl import PPOTrainer, PPOConfig
-from trl import DPOTrainer
+# from trl import DPOTrainer
 from transformers import Seq2SeqTrainingArguments
 from dataclasses import dataclass
 from transformers import DataCollatorForSeq2Seq
@@ -82,7 +82,7 @@ def main():
     model_peft_copy_disable = copy.deepcopy(model_peft)
     model_peft_copy_disable.disable_adapter_layers()
 
-    model_trl: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model_peft)  # peft/transformers -> trl
+    # model_trl: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model_peft)  # peft/transformers -> trl
 
     # training_args_dict = training_args.to_dict()
     # training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
@@ -152,7 +152,7 @@ def main():
     training_args.dataloader_num_workers = 1
     training_args.dataloader_prefetch_factor = 2
     finetuning_args = llmtuner.hparams.FinetuningArguments()
-    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # trl ->
+    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
                             tokenizer=tokenizer,
                             args=training_args,
                             train_dataset=dataset,
@@ -163,12 +163,12 @@ def main():
                             ftx_gamma=finetuning_args.dpo_ftx,
                             )
     
-    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_trl)
+    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+    str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     # train_result = trl_dpo_trainer.train()
     train_result = llmtuner_dpo_trainer.train()
@@ -176,7 +176,7 @@ def main():
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, device, model_trl, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+    str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     print("finished...")
 
