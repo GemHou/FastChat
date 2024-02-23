@@ -99,7 +99,7 @@ def main():
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
-    training_args.num_train_epochs = 3000
+    training_args.num_train_epochs = 1
     training_args.logging_steps = 1
     training_args.learning_rate = 5e-4
 
@@ -163,16 +163,6 @@ def main():
     training_args.dataloader_num_workers = 1
     training_args.dataloader_prefetch_factor = 2
     finetuning_args = llmtuner.hparams.FinetuningArguments()
-    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
-                            tokenizer=tokenizer,
-                            args=training_args,
-                            train_dataset=dataset,
-                            data_collator=data_collator,
-                            # device=device,
-                            beta=finetuning_args.dpo_beta,
-                            loss_type=finetuning_args.dpo_loss,
-                            ftx_gamma=finetuning_args.dpo_ftx,
-                            )
     
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
@@ -182,7 +172,19 @@ def main():
     str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     # train_result = trl_dpo_trainer.train()
-    train_result = llmtuner_dpo_trainer.train()
+
+    for i in range(100):
+        llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
+                                tokenizer=tokenizer,
+                                args=training_args,
+                                train_dataset=dataset,
+                                data_collator=data_collator,
+                                # device=device,
+                                beta=finetuning_args.dpo_beta,
+                                loss_type=finetuning_args.dpo_loss,
+                                ftx_gamma=finetuning_args.dpo_ftx,
+                                )
+        train_result = llmtuner_dpo_trainer.train()
 
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
