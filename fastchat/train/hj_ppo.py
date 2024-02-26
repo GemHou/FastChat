@@ -155,9 +155,7 @@ def train_once(tokenizer, ppo_trainer:PPOTrainer, list_list_tensor_dataset):
         queries.append(list_tensor_dataset[0])
         responses.append(list_tensor_dataset[1])
         rewards.append(list_tensor_dataset[2])
-    stats = ppo_trainer.step(queries, 
-                                    responses, 
-                                    rewards)
+    stats = ppo_trainer.step(queries, responses, rewards)
     log_wandb(tokenizer, ppo_trainer, rewards, queries, responses, stats)
 
 

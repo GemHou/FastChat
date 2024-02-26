@@ -16,6 +16,8 @@ from llmtuner.data.parser import get_dataset_list
 from llmtuner.data.loader import load_single_dataset, merge_dataset
 from llmtuner.train.dpo.trainer import CustomDPOTrainer
 import random
+from torch.optim import Adam
+from transformers.optimization import get_constant_schedule
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -101,7 +103,7 @@ def main():
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
     training_args.num_train_epochs = 1
     training_args.logging_steps = 1
-    training_args.learning_rate = 5e-4
+    training_args.learning_rate = 5e-5
 
     data_args = llmtuner.hparams.DataArguments()
     model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
@@ -173,7 +175,13 @@ def main():
 
     # train_result = trl_dpo_trainer.train()
 
+    learning_rate = 5e-5
+    # Create an Adam optimizer with the specified learning rate
+    optimizer = Adam(model_peft.parameters(), lr=learning_rate)
+
     for i in range(100):
+        lr_scheduler = get_constant_schedule(optimizer)
+
         llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
                                 tokenizer=tokenizer,
                                 args=training_args,
@@ -183,13 +191,14 @@ def main():
                                 beta=finetuning_args.dpo_beta,
                                 loss_type=finetuning_args.dpo_loss,
                                 ftx_gamma=finetuning_args.dpo_ftx,
+                                optimizers=(optimizer, lr_scheduler),
                                 )
         train_result = llmtuner_dpo_trainer.train()
 
-    str_prompt = "who are you?"
-    print("str_prompt: ", str_prompt)
-    print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        str_prompt = "who are you?"
+        print("str_prompt: ", str_prompt)
+        print("str_llm_answer: ")
+        str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     print("finished...")
 
