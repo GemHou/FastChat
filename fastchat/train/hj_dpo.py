@@ -118,12 +118,49 @@ def prepare_model(model_args):
     return model_peft,tokenizer
 
 def prepare_dataset(model_args, training_args, data_args, tokenizer):
-    start_time = time.time()
-    all_datasets = []
-    for dataset_attr in get_dataset_list(data_args):  # TODO: add split
-        all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
-    dataset = merge_dataset(all_datasets, data_args, training_args)
+    if True:
+        start_time = time.time()
+        all_datasets = []
+        for dataset_attr in get_dataset_list(data_args):  # TODO: add split
+            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+        print("prepare_dataset time 1: ", time.time() - start_time)
+        start_time = time.time()
+        dataset = merge_dataset(all_datasets, data_args, training_args)
+        print("prepare_dataset time 2: ", time.time() - start_time)
 
+    if True:
+        from datasets import Dataset
+        data = {
+            "prompt": [
+                [{"content": "who are you?", "role": "user"}],
+                [{"content": "who are you?", "role": "user"}],
+                [{"content": "who are you?", "role": "user"}],
+                [{"content": "who are you?", "role": "user"}],
+            ],
+            "response": [
+                [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"}],
+                [{"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+                [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"}],
+                [{"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+            ],
+            "system": ["", "", "", ""],
+            "tools": ["", "", "", ""],
+        }
+
+        # 转换为Dataset类
+        dataset2 = Dataset.from_dict(data)
+
+    print("prompt: ", dataset['prompt'])
+    print("response: ", dataset['response'])
+    print("system: ", dataset['system'])
+    print("tools: ", dataset['tools'])
+
+    print("prompt2: ", dataset2['prompt'])
+    print("response2: ", dataset2['response'])
+    print("system2: ", dataset2['system'])
+    print("tools2: ", dataset2['tools'])
+
+    start_time = time.time()
     ignore_pad_token_for_loss = True
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
@@ -149,7 +186,7 @@ def prepare_dataset(model_args, training_args, data_args, tokenizer):
     dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
     print("dataset")
-    print("prepare_dataset time: ", time.time() - start_time)
+    print("prepare_dataset time 3: ", time.time() - start_time)
     return dataset,data_collator
 
 def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
