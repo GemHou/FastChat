@@ -79,22 +79,10 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
         print("shuffle!!!")
         return super().collate_batch(features)
 
-
-def main():
-    device = "cuda"  # cuda cpu
+def prepare_args():
     model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
-    kwargs = {"torch_dtype": torch.float32, "revision": 'main'}  # float16
-    adapter = get_model_adapter(model_path)
-    model_peft, tokenizer = adapter.load_model(model_path, kwargs)
-    model_peft.to(device)
+    model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
 
-    # model_peft_copy_disable = copy.deepcopy(model_peft)  # important to GPU memory!!!
-    # model_peft_copy_disable.disable_adapter_layers()
-
-    # model_trl: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model_peft)  # peft/transformers -> trl
-
-    # training_args_dict = training_args.to_dict()
-    # training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
     training_args_dict = dict(remove_unused_columns=False, 
                               output_dir="./",
                               per_device_train_batch_size=8,  # important to GPU memory!!!
@@ -104,16 +92,27 @@ def main():
     training_args.num_train_epochs = 1
     training_args.logging_steps = 1
     training_args.learning_rate = 5e-5
+    del training_args.accelerator_config
+    training_args.dataloader_num_workers = 1
+    training_args.dataloader_prefetch_factor = 2
 
     data_args = llmtuner.hparams.DataArguments()
-    model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
-
-    # dataset = load_dataset('json', data_files='/mnt/nfs/houjing/repo/FastChat/fastchat/train/comparison_gpt4_data_en.json')
-    # dataset = dataset['train']
-
     data_args.dataset = "comparison_gpt4_en"
     data_args.dataset_dir = '/mnt/nfs/houjing/repo/FastChat/fastchat/train'
     data_args.cutoff_len = 256  # important to GPU memory!!!
+    data_args.template = "default"
+
+    finetuning_args = llmtuner.hparams.FinetuningArguments()
+    return model_path,model_args,training_args,data_args,finetuning_args
+
+def prepare_model(model_args):
+    kwargs = {"torch_dtype": torch.float32, "revision": 'main'}  # float16
+    adapter = get_model_adapter(model_args.model_name_or_path)
+    model_peft, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)
+    model_peft.to("cuda")
+    return model_peft,tokenizer
+
+def prepare_dataset(model_args, training_args, data_args, tokenizer):
     all_datasets = []
     for dataset_attr in get_dataset_list(data_args):  # TODO: add split
         all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
@@ -125,8 +124,6 @@ def main():
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if ignore_pad_token_for_loss else tokenizer.pad_token_id,
     )
-
-    data_args.template = "default"
 
     template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
@@ -146,59 +143,51 @@ def main():
     dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
     print("dataset")
+    return dataset,data_collator
 
-    del training_args.accelerator_config
+def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
+    learning_rate = 5e-6
+    optimizer = Adam(model_peft.parameters(), lr=learning_rate)
+    lr_scheduler = get_constant_schedule(optimizer)
 
-    # training_args.train_batch_size=1
-    # training_args.eval_batch_size=1
-    # training_args.per_device_train_batch_size=1
-    # training_args.per_device_eval_batch_size=1
+    llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
+                            tokenizer=tokenizer,
+                            args=training_args,
+                            train_dataset=dataset,
+                            data_collator=data_collator,
+                            # device=device,
+                            beta=finetuning_args.dpo_beta,
+                            loss_type=finetuning_args.dpo_loss,
+                            ftx_gamma=finetuning_args.dpo_ftx,
+                            optimizers=(optimizer, lr_scheduler),
+                            )
+                            
+    return llmtuner_dpo_trainer
 
-    # trl_dpo_trainer = DPOTrainer(model=model_trl,  # trl ->
-    #                         tokenizer=tokenizer,
-    #                         args=training_args,
-    #                         train_dataset=dataset,
-    #                         # data_collator=data_collator,
-    #                         # device=device,
-    #                         )
+
+def main():
+    model_path, model_args, training_args, data_args, finetuning_args = prepare_args()
     
-    training_args.dataloader_num_workers = 1
-    training_args.dataloader_prefetch_factor = 2
-    finetuning_args = llmtuner.hparams.FinetuningArguments()
-    
+    model_peft, tokenizer = prepare_model(model_args)
+
+    dataset, data_collator = prepare_dataset(model_args, training_args, data_args, tokenizer)
+
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
-    # train_result = trl_dpo_trainer.train()
-
-    learning_rate = 5e-5
-    # Create an Adam optimizer with the specified learning rate
-    optimizer = Adam(model_peft.parameters(), lr=learning_rate)
+    llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)
 
     for i in range(100):
-        lr_scheduler = get_constant_schedule(optimizer)
-
-        llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
-                                tokenizer=tokenizer,
-                                args=training_args,
-                                train_dataset=dataset,
-                                data_collator=data_collator,
-                                # device=device,
-                                beta=finetuning_args.dpo_beta,
-                                loss_type=finetuning_args.dpo_loss,
-                                ftx_gamma=finetuning_args.dpo_ftx,
-                                optimizers=(optimizer, lr_scheduler),
-                                )
         train_result = llmtuner_dpo_trainer.train()
 
         str_prompt = "who are you?"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, device, model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     print("finished...")
 
