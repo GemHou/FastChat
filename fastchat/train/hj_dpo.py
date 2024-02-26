@@ -88,7 +88,7 @@ def prepare_args():
 
     training_args_dict = dict(remove_unused_columns=False, 
                               output_dir="./",
-                              per_device_train_batch_size=2,  # important to GPU memory!!!
+                              per_device_train_batch_size=6,  # important to GPU memory!!!
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
@@ -166,10 +166,10 @@ def prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data):
     # 转换为Dataset类
     dataset = Dataset.from_dict(dict_data)
 
-    print("prompt2: ", dataset['prompt'])
-    print("response2: ", dataset['response'])
-    print("system2: ", dataset['system'])
-    print("tools2: ", dataset['tools'])
+    # print("prompt2: ", dataset['prompt'])
+    # print("response2: ", dataset['response'])
+    # print("system2: ", dataset['system'])
+    # print("tools2: ", dataset['tools'])
 
     dataset, data_collator = transform_dataset(training_args, data_args, tokenizer, dataset)
     print("prepare_dataset_from_dict time: ", time.time() - start_time)
@@ -177,9 +177,13 @@ def prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data):
 
 def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
     start_time = time.time()
-    learning_rate = 5e-6
+    learning_rate = 5e-5
     optimizer = Adam(model_peft.parameters(), lr=learning_rate)
     lr_scheduler = get_constant_schedule(optimizer)
+
+    loss_type = finetuning_args.dpo_loss
+    print("loss_type: ", loss_type)
+    loss_type = "ipo"  # "sigmoid", "hinge", "ipo", "kto_pair"
 
     llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
                             tokenizer=tokenizer,
@@ -188,7 +192,7 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
                             data_collator=data_collator,
                             # device=device,
                             beta=finetuning_args.dpo_beta,
-                            loss_type=finetuning_args.dpo_loss,
+                            loss_type=loss_type,
                             ftx_gamma=finetuning_args.dpo_ftx,
                             optimizers=(optimizer, lr_scheduler),
                             )
@@ -234,6 +238,9 @@ def main():
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
         str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.4)
+
+        if len(str_llm_answer) > 256:
+            str_llm_answer = str_llm_answer[:256]
 
         dict_data["prompt"].append([{"content": "who are you?", "role": "user"}])
         dict_data["response"].append([{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
