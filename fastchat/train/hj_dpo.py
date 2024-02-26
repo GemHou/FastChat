@@ -117,50 +117,7 @@ def prepare_model(model_args):
     print("prepare_model time: ", time.time() - start_time)
     return model_peft,tokenizer
 
-def prepare_dataset(model_args, training_args, data_args, tokenizer):
-    if True:
-        start_time = time.time()
-        all_datasets = []
-        for dataset_attr in get_dataset_list(data_args):  # TODO: add split
-            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
-        print("prepare_dataset time 1: ", time.time() - start_time)
-        start_time = time.time()
-        dataset = merge_dataset(all_datasets, data_args, training_args)
-        print("prepare_dataset time 2: ", time.time() - start_time)
-
-        print("prompt: ", dataset['prompt'])
-        print("response: ", dataset['response'])
-        print("system: ", dataset['system'])
-        print("tools: ", dataset['tools'])
-
-    if True:
-        from datasets import Dataset
-        data = {
-            "prompt": [
-                [{"content": "who are you?", "role": "user"}],
-                [{"content": "who are you?", "role": "user"}],
-            ],
-            "response": [
-                [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
-                {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-                [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
-                {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-            ],
-            "system": ["", ""],
-            "tools": ["", ""],
-        }
-
-        # 转换为Dataset类
-        dataset2 = Dataset.from_dict(data)
-
-        print("prompt2: ", dataset2['prompt'])
-        print("response2: ", dataset2['response'])
-        print("system2: ", dataset2['system'])
-        print("tools2: ", dataset2['tools'])
-
-        dataset = dataset2
-
-    start_time = time.time()
+def transform_dataset(training_args, data_args, tokenizer, dataset):
     ignore_pad_token_for_loss = True
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
@@ -184,9 +141,52 @@ def prepare_dataset(model_args, training_args, data_args, tokenizer):
             desc="Running tokenizer on dataset",
         )
     dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+    return dataset,data_collator
 
-    print("dataset")
-    print("prepare_dataset time 3: ", time.time() - start_time)
+def prepare_dataset_from_json(model_args, training_args, data_args, tokenizer):
+    start_time = time.time()
+    all_datasets = []
+    for dataset_attr in get_dataset_list(data_args):  # TODO: add split
+        all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+    dataset = merge_dataset(all_datasets, data_args, training_args)
+
+    print("prompt: ", dataset['prompt'])
+    print("response: ", dataset['response'])
+    print("system: ", dataset['system'])
+    print("tools: ", dataset['tools'])
+
+    dataset, data_collator = transform_dataset(training_args, data_args, tokenizer, dataset)
+    print("prepare_dataset_from_json time 1: ", time.time() - start_time)
+    return dataset,data_collator
+
+def prepare_dataset_from_dict(model_args, training_args, data_args, tokenizer):
+    start_time = time.time()
+    from datasets import Dataset
+    data = {
+        "prompt": [
+            [{"content": "who are you?", "role": "user"}],
+            [{"content": "who are you?", "role": "user"}],
+        ],
+        "response": [
+            [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
+            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+            [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
+            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+        ],
+        "system": ["", ""],
+        "tools": ["", ""],
+    }
+
+    # 转换为Dataset类
+    dataset = Dataset.from_dict(data)
+
+    print("prompt2: ", dataset['prompt'])
+    print("response2: ", dataset['response'])
+    print("system2: ", dataset['system'])
+    print("tools2: ", dataset['tools'])
+
+    dataset, data_collator = transform_dataset(training_args, data_args, tokenizer, dataset)
+    print("prepare_dataset_from_dict time: ", time.time() - start_time)
     return dataset,data_collator
 
 def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
@@ -215,7 +215,7 @@ def main():
     
     model_peft, tokenizer = prepare_model(model_args)  # time: 42.5s
 
-    dataset, data_collator = prepare_dataset(model_args, training_args, data_args, tokenizer)  # time: 10.4s
+    dataset, data_collator = prepare_dataset_from_json(model_args, training_args, data_args, tokenizer)  # time: 10.4s
 
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
@@ -224,10 +224,12 @@ def main():
     print("str_llm_answer: ")
     str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
-    llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
-
     for i in range(100):
-        train_result = llmtuner_dpo_trainer.train()
+        dataset, data_collator = prepare_dataset_from_dict(model_args, training_args, data_args, tokenizer)  # time: 10.4s
+
+        llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
+
+        train_result = llmtuner_dpo_trainer.train()  # time!!!!!!!!!!!!!
 
         str_prompt = "who are you?"
         print("str_prompt: ", str_prompt)
