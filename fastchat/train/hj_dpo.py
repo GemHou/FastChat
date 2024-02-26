@@ -87,7 +87,7 @@ def prepare_args():
 
     training_args_dict = dict(remove_unused_columns=False, 
                               output_dir="./",
-                              per_device_train_batch_size=8,  # important to GPU memory!!!
+                              per_device_train_batch_size=2,  # important to GPU memory!!!
                               per_device_eval_batch_size=1,
                               )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
@@ -128,37 +128,37 @@ def prepare_dataset(model_args, training_args, data_args, tokenizer):
         dataset = merge_dataset(all_datasets, data_args, training_args)
         print("prepare_dataset time 2: ", time.time() - start_time)
 
+        print("prompt: ", dataset['prompt'])
+        print("response: ", dataset['response'])
+        print("system: ", dataset['system'])
+        print("tools: ", dataset['tools'])
+
     if True:
         from datasets import Dataset
         data = {
             "prompt": [
                 [{"content": "who are you?", "role": "user"}],
                 [{"content": "who are you?", "role": "user"}],
-                [{"content": "who are you?", "role": "user"}],
-                [{"content": "who are you?", "role": "user"}],
             ],
             "response": [
-                [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"}],
-                [{"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-                [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"}],
-                [{"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+                [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
+                {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+                [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
+                {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
             ],
-            "system": ["", "", "", ""],
-            "tools": ["", "", "", ""],
+            "system": ["", ""],
+            "tools": ["", ""],
         }
 
         # 转换为Dataset类
         dataset2 = Dataset.from_dict(data)
 
-    print("prompt: ", dataset['prompt'])
-    print("response: ", dataset['response'])
-    print("system: ", dataset['system'])
-    print("tools: ", dataset['tools'])
+        print("prompt2: ", dataset2['prompt'])
+        print("response2: ", dataset2['response'])
+        print("system2: ", dataset2['system'])
+        print("tools2: ", dataset2['tools'])
 
-    print("prompt2: ", dataset2['prompt'])
-    print("response2: ", dataset2['response'])
-    print("system2: ", dataset2['system'])
-    print("tools2: ", dataset2['tools'])
+        dataset = dataset2
 
     start_time = time.time()
     ignore_pad_token_for_loss = True
