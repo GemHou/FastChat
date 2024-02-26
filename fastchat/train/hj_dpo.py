@@ -206,7 +206,7 @@ def main():
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.4)
 
     dict_data = {
         "prompt": [
@@ -233,7 +233,14 @@ def main():
         str_prompt = "who are you?"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.4)
+
+        dict_data["prompt"].append([{"content": "who are you?", "role": "user"}])
+        dict_data["response"].append([{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
+            {"content": str_llm_answer, "role": "assistant"}])
+        dict_data["system"].append("")
+        dict_data["tools"].append("")
+        print("len(dict_data['response']): ", len(dict_data["response"]))
 
     print("finished...")
 
