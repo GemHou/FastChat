@@ -19,6 +19,7 @@ import random
 from torch.optim import Adam
 from transformers.optimization import get_constant_schedule
 import time
+from datasets import Dataset
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -159,26 +160,11 @@ def prepare_dataset_from_json(model_args, training_args, data_args, tokenizer):
     print("prepare_dataset_from_json time 1: ", time.time() - start_time)
     return dataset,data_collator
 
-def prepare_dataset_from_dict(model_args, training_args, data_args, tokenizer):
+def prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data):
     start_time = time.time()
-    from datasets import Dataset
-    data = {
-        "prompt": [
-            [{"content": "who are you?", "role": "user"}],
-            [{"content": "who are you?", "role": "user"}],
-        ],
-        "response": [
-            [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
-            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-            [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
-            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-        ],
-        "system": ["", ""],
-        "tools": ["", ""],
-    }
 
     # 转换为Dataset类
-    dataset = Dataset.from_dict(data)
+    dataset = Dataset.from_dict(dict_data)
 
     print("prompt2: ", dataset['prompt'])
     print("response2: ", dataset['response'])
@@ -215,8 +201,6 @@ def main():
     
     model_peft, tokenizer = prepare_model(model_args)  # time: 42.5s
 
-    dataset, data_collator = prepare_dataset_from_json(model_args, training_args, data_args, tokenizer)  # time: 10.4s
-
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
     str_prompt = "who are you?"
@@ -224,8 +208,23 @@ def main():
     print("str_llm_answer: ")
     str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
+    dict_data = {
+        "prompt": [
+            [{"content": "who are you?", "role": "user"}],
+            [{"content": "who are you?", "role": "user"}],
+        ],
+        "response": [
+            [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
+            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+            [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
+            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+        ],
+        "system": ["", ""],
+        "tools": ["", ""],
+    }
+
     for i in range(100):
-        dataset, data_collator = prepare_dataset_from_dict(model_args, training_args, data_args, tokenizer)  # time: 10.4s
+        dataset, data_collator = prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data)  # time: 10.4s
 
         llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
 
