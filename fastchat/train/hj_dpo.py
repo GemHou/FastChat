@@ -18,6 +18,7 @@ from llmtuner.train.dpo.trainer import CustomDPOTrainer
 import random
 from torch.optim import Adam
 from transformers.optimization import get_constant_schedule
+import time
 
 from fastchat.model.model_adapter import get_model_adapter
 from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
@@ -80,6 +81,7 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
         return super().collate_batch(features)
 
 def prepare_args():
+    start_time = time.time()
     model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
     model_args = llmtuner.hparams.ModelArguments(model_name_or_path=model_path)
 
@@ -103,16 +105,20 @@ def prepare_args():
     data_args.template = "default"
 
     finetuning_args = llmtuner.hparams.FinetuningArguments()
+    print("prepare_args time: ", time.time() - start_time)
     return model_path,model_args,training_args,data_args,finetuning_args
 
 def prepare_model(model_args):
+    start_time = time.time()
     kwargs = {"torch_dtype": torch.float32, "revision": 'main'}  # float16
     adapter = get_model_adapter(model_args.model_name_or_path)
     model_peft, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)
     model_peft.to("cuda")
+    print("prepare_model time: ", time.time() - start_time)
     return model_peft,tokenizer
 
 def prepare_dataset(model_args, training_args, data_args, tokenizer):
+    start_time = time.time()
     all_datasets = []
     for dataset_attr in get_dataset_list(data_args):  # TODO: add split
         all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
@@ -143,9 +149,11 @@ def prepare_dataset(model_args, training_args, data_args, tokenizer):
     dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
     print("dataset")
+    print("prepare_dataset time: ", time.time() - start_time)
     return dataset,data_collator
 
 def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
+    start_time = time.time()
     learning_rate = 5e-6
     optimizer = Adam(model_peft.parameters(), lr=learning_rate)
     lr_scheduler = get_constant_schedule(optimizer)
@@ -161,16 +169,16 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
                             ftx_gamma=finetuning_args.dpo_ftx,
                             optimizers=(optimizer, lr_scheduler),
                             )
-                            
+    print("prepare_trainer time: ", time.time() - start_time)
     return llmtuner_dpo_trainer
 
 
 def main():
-    model_path, model_args, training_args, data_args, finetuning_args = prepare_args()
+    model_path, model_args, training_args, data_args, finetuning_args = prepare_args()  # time: 0.0018s
     
-    model_peft, tokenizer = prepare_model(model_args)
+    model_peft, tokenizer = prepare_model(model_args)  # time: 42.5s
 
-    dataset, data_collator = prepare_dataset(model_args, training_args, data_args, tokenizer)
+    dataset, data_collator = prepare_dataset(model_args, training_args, data_args, tokenizer)  # time: 10.4s
 
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
@@ -179,7 +187,7 @@ def main():
     print("str_llm_answer: ")
     str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
-    llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)
+    llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
 
     for i in range(100):
         train_result = llmtuner_dpo_trainer.train()
