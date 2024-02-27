@@ -183,7 +183,11 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
 
     loss_type = finetuning_args.dpo_loss
     print("loss_type: ", loss_type)
-    loss_type = "ipo"  # "sigmoid", "hinge", "ipo", "kto_pair"
+    loss_type = "sigmoid"  # "sigmoid", "hinge", "ipo", "kto_pair"
+
+    beta = finetuning_args.dpo_beta
+    print("beta: ", beta)
+    beta = 0.1
 
     llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
                             tokenizer=tokenizer,
@@ -191,7 +195,7 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
                             train_dataset=dataset,
                             data_collator=data_collator,
                             # device=device,
-                            beta=finetuning_args.dpo_beta,
+                            beta=beta,
                             loss_type=loss_type,
                             ftx_gamma=finetuning_args.dpo_ftx,
                             optimizers=(optimizer, lr_scheduler),
@@ -210,7 +214,7 @@ def main():
     str_prompt = "who are you?"
     print("str_prompt: ", str_prompt)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.4)
+    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
 
     dict_data = {
         "prompt": [
@@ -227,7 +231,7 @@ def main():
         "tools": ["", ""],
     }
 
-    for i in range(100):
+    for i in range(500):
         dataset, data_collator = prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data)  # time: 10.4s
 
         llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
@@ -237,7 +241,7 @@ def main():
         str_prompt = "who are you?"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=1.4)
+        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
 
         if len(str_llm_answer) > 256:
             str_llm_answer = str_llm_answer[:256]
