@@ -177,7 +177,7 @@ def prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data):
 
 def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator):
     start_time = time.time()
-    learning_rate = 5e-5
+    learning_rate = 5e-6
     optimizer = Adam(model_peft.parameters(), lr=learning_rate)
     lr_scheduler = get_constant_schedule(optimizer)
 
@@ -224,14 +224,16 @@ def main():
         "response": [
             [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
             {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-            [{"content": "I am a Game AI trained from Shanghai AI Laboratory.", "role": "assistant"},
-            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+            [{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
+            {"content": "My name is Vicuna, and I'm a language model developed by Large Model Systems Organization (LMSYS).", "role": "assistant"}],
         ],
         "system": ["", ""],
         "tools": ["", ""],
     }
 
     for i in range(500):
+        model_peft.enable_adapter_layers()
+
         dataset, data_collator = prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data)  # time: 10.4s
 
         llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
@@ -247,7 +249,7 @@ def main():
             str_llm_answer = str_llm_answer[:256]
 
         dict_data["prompt"].append([{"content": "who are you?", "role": "user"}])
-        dict_data["response"].append([{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
+        dict_data["response"].append([{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
             {"content": str_llm_answer, "role": "assistant"}])
         dict_data["system"].append("")
         dict_data["tools"].append("")
