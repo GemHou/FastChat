@@ -208,6 +208,10 @@ def generate_stream(
             token_logprobs.append(
                 torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
             )
+        else:  # HJ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            token_logprobs.append(
+                torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
+            )
 
         if token in stop_token_ids:
             stopped = True
@@ -244,6 +248,21 @@ def generate_stream(
                     else token_logprobs[input_echo_len:],
                     "top_logprobs": [{}]
                     * len(token_logprobs if echo else token_logprobs[input_echo_len:]),
+                }
+                # Compute text_offset
+                curr_pos = 0
+                for text in ret_logprobs["tokens"]:
+                    ret_logprobs["text_offset"].append(curr_pos)
+                    curr_pos += len(text)
+            else:  # hj!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ret_logprobs = {
+                    "text_offset": [],
+                    "tokens": [
+                        tokenizer.decode(token)
+                        for token in output_ids
+                    ],
+                    "token_logprobs": token_logprobs,
+                    "top_logprobs": [{}] * len(token_logprobs),
                 }
                 # Compute text_offset
                 curr_pos = 0

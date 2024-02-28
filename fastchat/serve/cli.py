@@ -17,6 +17,7 @@ import argparse
 import os
 import re
 import sys
+import numpy as np
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -60,7 +61,8 @@ class SimpleChatIO(ChatIO):
 
     def stream_output(self, output_stream):
         pre = 0
-        for outputs in output_stream:
+        answer_logprobs = 0
+        for outputs in output_stream:  # /mnt/nfs/houjing/repo/FastChat/fastchat/serve/inference.py line 62 generate_stream
             output_text = outputs["text"]
             output_text = output_text.strip().split(" ")
             now = len(output_text) - 1
@@ -68,6 +70,9 @@ class SimpleChatIO(ChatIO):
                 print(" ".join(output_text[pre:now]), end=" ", flush=True)
                 pre = now
         print(" ".join(output_text[pre:]), flush=True)
+        outputs['logprobs']['token_logprobs'][0] = 0
+        answer_logprobs = np.sum(outputs['logprobs']['token_logprobs'])
+        print("answer_logprobs: ", answer_logprobs)
         return " ".join(output_text)
 
     def print_output(self, text: str):
