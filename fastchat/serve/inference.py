@@ -81,6 +81,7 @@ def generate_stream(
     max_new_tokens = int(params.get("max_new_tokens", 256))
     logprobs = params.get("logprobs", None)  # FIXME: Support logprobs>1.
     echo = bool(params.get("echo", True))
+    echo = True
     stop_str = params.get("stop", None)
     stop_token_ids = params.get("stop_token_ids", None) or []
     if tokenizer.eos_token_id not in stop_token_ids:

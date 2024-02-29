@@ -73,16 +73,19 @@ def new_chat(model_path):
         return conv
 
 
-def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=None):
+def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=None):
     conv = new_chat(model_path)
-    conv.append_message(conv.roles[0], str_prompt)
-    conv.append_message(conv.roles[1], None)
-    prompt = conv.get_prompt()
+    if False:
+        conv.append_message(conv.roles[0], str_prompt_woSystem)
+        conv.append_message(conv.roles[1], None)
+        str_prompt_wSystem = conv.get_prompt()
+    else:
+        str_prompt_wSystem = str_prompt_woSystem
     if temperature is None:
         temperature = 0.7 + random.random() * 0.2
     gen_params = {
                     "model": model_path,
-                    "prompt": prompt,
+                    "prompt": str_prompt_wSystem,
                     "temperature": temperature,
                     "repetition_penalty": repetition_penalty,
                     "max_new_tokens": max_new_tokens,
@@ -105,7 +108,7 @@ def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repeti
     duration = time.time() - t
 
     print("duration: ", duration)
-    return outputs
+    return outputs, str_prompt_wSystem
 
 
 def judge_truth_sparse(str_llm_answer):

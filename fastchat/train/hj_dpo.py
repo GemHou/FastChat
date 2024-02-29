@@ -211,15 +211,16 @@ def main():
 
     generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_path, model_peft)
 
-    str_prompt = "who are you?"
-    print("str_prompt: ", str_prompt)
+    str_prompt_woSystem = "who are you?"
+    print("str_prompt_woSystem: ", str_prompt_woSystem)
     print("str_llm_answer: ")
-    str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+    print("str_prompt_wSystem: ", str_prompt_wSystem)
 
     dict_data = {
         "prompt": [
-            [{"content": "who are you?", "role": "user"}],
-            [{"content": "who are you?", "role": "user"}],
+            [{"content": str_prompt_wSystem, "role": "user"}],
+            [{"content": str_prompt_wSystem, "role": "user"}],
         ],
         "response": [
             [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
@@ -240,15 +241,18 @@ def main():
 
         train_result = llmtuner_dpo_trainer.train()  # time!!!!!!!!!!!!!
 
-        str_prompt = "who are you?"
-        print("str_prompt: ", str_prompt)
+        str_prompt_woSystem = "who are you?"
+        print("str_prompt_woSystem: ", str_prompt_woSystem)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0.9)
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+        print("str_prompt_wSystem: ", str_prompt_wSystem)
+
+        # raise
 
         if len(str_llm_answer) > 256:
             str_llm_answer = str_llm_answer[:256]
 
-        dict_data["prompt"].append([{"content": "who are you?", "role": "user"}])
+        dict_data["prompt"].append([{"content": str_prompt_wSystem, "role": "user"}])
         dict_data["response"].append([{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
             {"content": str_llm_answer, "role": "assistant"}])
         dict_data["system"].append("")
