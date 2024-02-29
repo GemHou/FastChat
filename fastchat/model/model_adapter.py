@@ -65,10 +65,12 @@ OPENAI_MODEL_LIST = (
     "gpt-3.5-turbo-0301",
     "gpt-3.5-turbo-0613",
     "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo-0125",
     "gpt-4",
     "gpt-4-0314",
     "gpt-4-0613",
     "gpt-4-turbo",
+    "gpt-4-1106-preview",
     "gpt-4-0125-preview",
 )
 
@@ -2222,6 +2224,10 @@ class LlavaAdapter(BaseModelAdapter):
         return "llava" in model_path.lower()
 
     def get_default_conv_template(self, model_path: str) -> Conversation:
+        model_path = model_path.lower()
+        if "34b" in model_path:
+            return get_conv_template("llava-chatml")
+
         return get_conv_template("vicuna_v1.1")
 
 
@@ -2257,6 +2263,16 @@ class YuanAdapter(BaseModelAdapter):
 
     def get_default_conv_template(self, model_path: str) -> Conversation:
         return get_conv_template("yuan")
+
+
+class GemmaAdapter(BaseModelAdapter):
+    """The model adapter for Gemma"""
+
+    def match(self, model_path: str):
+        return "gemma" in model_path.lower()
+
+    def get_default_conv_template(self, model_path: str) -> Conversation:
+        return get_conv_template("gemma")
 
 
 # Note: the registration order matters.
@@ -2348,6 +2364,7 @@ register_model_adapter(SolarAdapter)
 register_model_adapter(SteerLMAdapter)
 register_model_adapter(LlavaAdapter)
 register_model_adapter(YuanAdapter)
+register_model_adapter(GemmaAdapter)
 
 # After all adapters, try the default base adapter.
 register_model_adapter(BaseModelAdapter)
