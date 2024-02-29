@@ -14,6 +14,11 @@ pip install scipy
 python -m bitsandbytes
 ```
 
+## pip install transformers==4.31!!!
+```bash
+pip install transformers==4.31
+```
+
 remove (comment) the bitsandbytes code in /mnt/nfs/envs_hj/envs/FASTCHAT/lib/python3.9/site-packages/peft/tuners/lora/model.py manually!!!
 
 # Eval
@@ -432,14 +437,14 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --logging_strategy "steps" \
     --evaluation_strategy "epoch" \
     --save_strategy "epoch" \
-    --save_total_limit 10 \
-    --num_train_epochs 10 \
-    --lora_r 2 \
+    --save_total_limit 2 \
+    --num_train_epochs 2 \
+    --lora_r 1 \
     --lora_alpha 16 \
     --lora_dropout 0.05 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 4 \
+    --gradient_accumulation_steps 1 \
     --learning_rate 2e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \

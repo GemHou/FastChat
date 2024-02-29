@@ -75,7 +75,7 @@ def new_chat(model_path):
 
 def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=None):
     conv = new_chat(model_path)
-    if False:
+    if True:
         conv.append_message(conv.roles[0], str_prompt_woSystem)
         conv.append_message(conv.roles[1], None)
         str_prompt_wSystem = conv.get_prompt()

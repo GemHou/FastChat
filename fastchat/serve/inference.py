@@ -213,10 +213,10 @@ def generate_stream(
             token_logprobs.append(
                 torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
             )
-        # else:  # HJ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #     token_logprobs.append(
-        #         torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
-        #     )
+        else:  # HJ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            token_logprobs.append(
+                torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
+            )
 
         if token in stop_token_ids:
             stopped = True
@@ -259,21 +259,21 @@ def generate_stream(
                 for text in ret_logprobs["tokens"]:
                     ret_logprobs["text_offset"].append(curr_pos)
                     curr_pos += len(text)
-            # else:  # hj!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            #     ret_logprobs = {
-            #         "text_offset": [],
-            #         "tokens": [
-            #             tokenizer.decode(token)
-            #             for token in output_ids
-            #         ],
-            #         "token_logprobs": token_logprobs,
-            #         "top_logprobs": [{}] * len(token_logprobs),
-            #     }
-            #     # Compute text_offset
-            #     curr_pos = 0
-            #     for text in ret_logprobs["tokens"]:
-            #         ret_logprobs["text_offset"].append(curr_pos)
-            #         curr_pos += len(text)
+            else:  # hj!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ret_logprobs = {
+                    "text_offset": [],
+                    "tokens": [
+                        tokenizer.decode(token)
+                        for token in output_ids
+                    ],
+                    "token_logprobs": token_logprobs,
+                    "top_logprobs": [{}] * len(token_logprobs),
+                }
+                # Compute text_offset
+                curr_pos = 0
+                for text in ret_logprobs["tokens"]:
+                    ret_logprobs["text_offset"].append(curr_pos)
+                    curr_pos += len(text)
 
             # TODO: For the issue of incomplete sentences interrupting output, apply a patch and others can also modify it to a more elegant way
             if judge_sent_end and stopped and not is_sentence_complete(output):
