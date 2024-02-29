@@ -14,8 +14,9 @@ pip install scipy
 python -m bitsandbytes
 ```
 
-## pip install transformers==4.31!!!
+## pip install transformers==4.31 or 4.32!!!
 ```bash
+pip install huggingface-hub==0.19.4
 pip install transformers==4.31
 ```
 

@@ -138,7 +138,7 @@ def train():
     ddp = world_size != 1
     if lora_args.q_lora:
         device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)} if ddp else None
-        if len(training_args.fsdp) > 0 or deepspeed.is_deepspeed_zero3_enabled():
+        if len(training_args.fsdp) > 0:  #  or deepspeed.is_deepspeed_zero3_enabled()
             logging.warning(
                 "FSDP and ZeRO3 are both currently incompatible with QLoRA."
             )
@@ -219,7 +219,8 @@ def train():
     trainer.save_state()
 
     # check if zero3 mode enabled
-    if deepspeed.is_deepspeed_zero3_enabled():
+    # if deepspeed.is_deepspeed_zero3_enabled():
+    if False:
         # use deepspeed engine internal function to gather state dict
         # state_dict_zero3 contains whole parameters of base and lora adapters
         # we will not extract lora parameters since peft save_pretrained will do that
