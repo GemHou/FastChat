@@ -163,7 +163,7 @@ def mask_targets(conversations, targets, tokenizer, conv):
             if i != 0:
                 turn = user_turn_separator + turn
 
-            turn_len = len(tokenizer(turn).input_ids)  # , add_special_tokens=False
+            turn_len = len(tokenizer(turn, add_special_tokens=False).input_ids)
 
             if assistant_turn_separator in turn:
                 parts = turn.rsplit(assistant_turn_separator)
@@ -172,7 +172,7 @@ def mask_targets(conversations, targets, tokenizer, conv):
                 parts = [turn]
 
             instruction_len = len(
-                tokenizer(parts[0]).input_ids  # , add_special_tokens=False
+                tokenizer(parts[0], add_special_tokens=False).input_ids
             )
 
             target[cur_len : cur_len + instruction_len] = IGNORE_TOKEN_ID
