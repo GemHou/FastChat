@@ -21,8 +21,8 @@ import pathlib
 import typing
 import os
 import wandb
-os.environ["WANDB_API_KEY"] = 'KEY'
-os.environ["WANDB_MODE"] = "offline"
+# os.environ["WANDB_API_KEY"] = 'KEY'
+# os.environ["WANDB_MODE"] = "offline"
 
 from deepspeed import zero
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
@@ -115,6 +115,10 @@ def train():
         training_args,
         lora_args,
     ) = parser.parse_args_into_dataclasses()
+
+    # del training_args.accelerator_config
+    training_args.dataloader_num_workers = 1
+    training_args.dataloader_prefetch_factor = 2
 
     print("model_args.model_name_or_path: ", model_args.model_name_or_path)
     print("training_args.cache_dir: ", training_args.cache_dir)
