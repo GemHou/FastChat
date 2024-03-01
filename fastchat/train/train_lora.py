@@ -21,8 +21,8 @@ import pathlib
 import typing
 import os
 import wandb
-os.environ["WANDB_API_KEY"] = 'KEY'
-os.environ["WANDB_MODE"] = "offline"
+# os.environ["WANDB_API_KEY"] = 'KEY'
+# os.environ["WANDB_MODE"] = "offline"
 
 from deepspeed import zero
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
