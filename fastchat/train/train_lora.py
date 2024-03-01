@@ -150,20 +150,28 @@ def train():
         else (torch.bfloat16 if training_args.bf16 else torch.float32)
     )
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-        device_map=device_map,
-        # quantization_config=BitsAndBytesConfig(
-        #     load_in_4bit=True,
-        #     bnb_4bit_use_double_quant=True,
-        #     bnb_4bit_quant_type="nf4",
-        #     bnb_4bit_compute_dtype=compute_dtype,
-        # 
-        # )
-        # if lora_args.q_lora
-        # else None,
-    )
+
+    if False:
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+            device_map=device_map,
+            # quantization_config=BitsAndBytesConfig(
+            #     load_in_4bit=True,
+            #     bnb_4bit_use_double_quant=True,
+            #     bnb_4bit_quant_type="nf4",
+            #     bnb_4bit_compute_dtype=compute_dtype,
+            # 
+            # )
+            # if lora_args.q_lora
+            # else None,
+        )
+    else:
+        from fastchat.model.model_adapter import get_model_adapter
+        kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+        adapter = get_model_adapter(model_args.model_name_or_path)
+        model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
+        model.to("cuda")
     lora_config = LoraConfig(
         r=lora_args.lora_r,
         lora_alpha=lora_args.lora_alpha,

@@ -427,8 +427,39 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --model_name_or_path /mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-7b-v1.5 \
     --data_path /mnt/nfs/houjing/repo/FastChat/data/raw/train_vicuna6-s-feedback.json \
     --dev_ratio 0.1 \
-    --output_dir ./data/interim/vicuna-13b-lora-0229-epoch10-lr2em4-zqData \
-    --run_name vicuna-13b-lora-0229-epoch10-lr2em4-zqData \
+    --output_dir ./data/interim/vicuna-7b-lora-0229-epoch10-lr2em4-zqData \
+    --run_name vicuna-7b-lora-0229-epoch10-lr2em4-zqData \
+    --fp16 True \
+    --tf32 True \
+    --q_lora True \
+    --gradient_checkpointing True \
+    --flash_attn True \
+    --lr_scheduler_type "cosine" \
+    --logging_strategy "steps" \
+    --evaluation_strategy "epoch" \
+    --save_strategy "epoch" \
+    --save_total_limit 10 \
+    --num_train_epochs 10 \
+    --lora_r 32 \
+    --lora_alpha 16 \
+    --lora_dropout 0.05 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --learning_rate 2e-4 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --logging_steps 1 \
+    --model_max_length 2048
+```
+
+```bash
+CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
+    --model_name_or_path /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232/checkpoint-10470 \
+    --data_path /mnt/nfs/houjing/repo/FastChat/data/raw/train_vicuna6-s-feedback.json \
+    --dev_ratio 0.1 \
+    --output_dir ./data/interim/vicuna-13b-lora-0229-epoch10-lr2em4-37232+zqData \
+    --run_name vicuna-13b-lora-0229-epoch10-lr2em4-37232+zqData \
     --fp16 True \
     --tf32 True \
     --q_lora True \
