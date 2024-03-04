@@ -26,7 +26,7 @@ import wandb
 
 from deepspeed import zero
 from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, inject_adapter_in_model
 import transformers
 from transformers import Trainer, deepspeed
 # from transformers import BitsAndBytesConfig
@@ -184,9 +184,34 @@ def train():
             # if lora_args.q_lora
             # else None,
         )
+        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
+        str_prompt_woSystem = "输出倾向角色有哪些技能？"
+        print("line 196 str_llm_answer: ")
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
+
+        if lora_args.q_lora:
+            model = prepare_model_for_kbit_training(
+                model, use_gradient_checkpointing=training_args.gradient_checkpointing
+            )
+            if not ddp and torch.cuda.device_count() > 1:
+                # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
+                model.is_parallelizable = True
+                model.model_parallel = True
+
+        lora_config = LoraConfig(
+            r=lora_args.lora_r,
+            lora_alpha=lora_args.lora_alpha,
+            target_modules=lora_args.lora_target_modules,
+            lora_dropout=lora_args.lora_dropout,
+            bias=lora_args.lora_bias,
+            task_type="CAUSAL_LM",
+        )
+
+        model = get_peft_model(model, lora_config)
     else:
         from fastchat.model.model_adapter import get_model_adapter
-        kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+        kwargs = {"torch_dtype": torch.float32, "revision": 'main'}
         adapter = get_model_adapter(model_args.model_name_or_path)
         model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
         model.to("cuda")
@@ -194,29 +219,24 @@ def train():
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
         str_prompt_woSystem = "输出倾向角色有哪些技能？"
         print("line 196 str_llm_answer: ")
-        # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
         # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
-    if lora_args.q_lora:
-        model = prepare_model_for_kbit_training(
-            model, use_gradient_checkpointing=training_args.gradient_checkpointing
-        )
-        if not ddp and torch.cuda.device_count() > 1:
-            # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
-            model.is_parallelizable = True
-            model.model_parallel = True
+        # print("type(model): ", type(model))
+        # lora_config = LoraConfig(
+        #     r=lora_args.lora_r,
+        #     lora_alpha=lora_args.lora_alpha,
+        #     target_modules=lora_args.lora_target_modules,
+        #     lora_dropout=lora_args.lora_dropout,
+        #     bias=lora_args.lora_bias,
+        #     task_type="CAUSAL_LM",
+        # )
 
-    lora_config = LoraConfig(
-        r=lora_args.lora_r,
-        lora_alpha=lora_args.lora_alpha,
-        target_modules=lora_args.lora_target_modules,
-        lora_dropout=lora_args.lora_dropout,
-        bias=lora_args.lora_bias,
-        task_type="CAUSAL_LM",
-    )
+        # model = inject_adapter_in_model(lora_config, model, "second")
+        # model = get_peft_model(model, lora_config)
+        # print("type(model): ", type(model))
 
-    model = get_peft_model(model, lora_config)
     if training_args.flash_attn:
         for name, module in model.named_modules():
             if "norm" in name:
@@ -245,6 +265,10 @@ def train():
     )
 
     model.config.use_cache = False
+
+    str_prompt_woSystem = "输出倾向角色有哪些技能？"
+    print("line 196 str_llm_answer: ")
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
