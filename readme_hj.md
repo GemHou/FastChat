@@ -470,18 +470,18 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --evaluation_strategy "epoch" \
     --save_strategy "epoch" \
     --save_total_limit 10 \
-    --num_train_epochs 10 \
+    --num_train_epochs 1 \
     --lora_r 32 \
     --lora_alpha 16 \
     --lora_dropout 0.05 \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 2 \
-    --gradient_accumulation_steps 4 \
+    --gradient_accumulation_steps 1 \
     --learning_rate 2e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --logging_steps 1 \
-    --model_max_length 2048
+    --model_max_length 256
 ```
 
 ```bash

@@ -194,7 +194,7 @@ def train():
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
         str_prompt_woSystem = "输出倾向角色有哪些技能？"
         print("line 196 str_llm_answer: ")
-        str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+        # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
         # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
@@ -271,6 +271,10 @@ def train():
 
     if training_args.local_rank == 0:
         model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+
+    str_prompt_woSystem = "输出倾向角色有哪些技能？"
+    print("line 196 str_llm_answer: ")
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
 
 if __name__ == "__main__":
