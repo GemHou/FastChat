@@ -41,6 +41,7 @@ from fastchat.train.train import (
 from fastchat.train.llama_flash_attn_monkey_patch import (
     replace_llama_attn_with_flash_attn,
 )
+from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
 
 
 @dataclass
@@ -106,6 +107,8 @@ def get_peft_state_maybe_zero_3(named_params, bias):
 
 
 def train():
+    # raise
+
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments, LoraArguments)
     )
@@ -130,7 +133,23 @@ def train():
     print("training_args.model_max_length: ", training_args.model_max_length)
     print("training_args: ", training_args)
 
-    if training_args.flash_attn:
+
+    # print("Loading...")
+    # # model_path = "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-7b-lora-CQ-v0-1217-epoch100/checkpoint-2500"
+    # from fastchat.model.model_adapter import get_model_adapter
+    # kwargs = {"torch_dtype": torch.float16, "revision": 'main'}
+    # adapter = get_model_adapter(model_args.model_name_or_path)
+    # model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)
+    # model.to("cuda")
+    # generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
+    # str_prompt = "输出倾向角色有哪些技能？"
+    # print("str_prompt: ", str_prompt)
+    # print("str_llm_answer: ")
+    # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+
+    # print("Finished...")
+
+    if training_args.flash_attn:  # make infer error!!!
         replace_llama_attn_with_flash_attn()
 
     device_map = None
@@ -149,7 +168,6 @@ def train():
         if training_args.fp16
         else (torch.bfloat16 if training_args.bf16 else torch.float32)
     )
-
 
     if False:  # todo: judge whether adapter 
         model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -173,10 +191,12 @@ def train():
         model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
         model.to("cuda")
 
-        from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
         str_prompt_woSystem = "输出倾向角色有哪些技能？"
+        print("line 196 str_llm_answer: ")
         str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
+        # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
 
     if lora_args.q_lora:
         model = prepare_model_for_kbit_training(

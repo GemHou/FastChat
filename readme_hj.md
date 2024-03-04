@@ -464,7 +464,7 @@ CUDA_VISIBLE_DEVICES=6 python fastchat/train/train_lora.py \
     --tf32 True \
     --q_lora True \
     --gradient_checkpointing True \
-    --flash_attn True \
+    --flash_attn False \
     --lr_scheduler_type "cosine" \
     --logging_strategy "steps" \
     --evaluation_strategy "epoch" \
