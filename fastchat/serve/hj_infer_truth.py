@@ -3,7 +3,7 @@ import tqdm
 import numpy as np
 import torch
 
-from hj_utils_llm import load_llm_model, infer_llm, load_llm_setting, eval_llm_truth, judge_truth
+from hj_utils_llm import load_llm_model, infer_llm, load_llm_setting, eval_llm_truth, judge_truth_sparse
 from hj_utils_language import load_qa_pairs_from_json
 
 
@@ -18,8 +18,8 @@ def eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, ge
         str_prompt = "请根据以下语料，判断对问题的回答是否符合事实:\n语料:" + corpus + "。\n问题:" + question + "\n回答：" + answer_llm_env + "\n"
         print("str_prompt: ", str_prompt)
         print("str_llm_answer: ")
-        str_llm_answer = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
-        truth_ratio = judge_truth(str_llm_answer)
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
+        truth_ratio = judge_truth_sparse(str_llm_answer)
         print("truth_ratio: ", truth_ratio)
         list_truth_ratio.append(truth_ratio)
     return list_truth_ratio

@@ -173,6 +173,11 @@ def train():
         model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
         model.to("cuda")
 
+        from fastchat.serve.hj_utils_llm import load_llm_setting, infer_llm
+        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
+        str_prompt_woSystem = "输出倾向角色有哪些技能？"
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
     if lora_args.q_lora:
         model = prepare_model_for_kbit_training(
             model, use_gradient_checkpointing=training_args.gradient_checkpointing
