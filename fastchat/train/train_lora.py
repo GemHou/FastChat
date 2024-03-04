@@ -151,7 +151,7 @@ def train():
     )
 
 
-    if False:
+    if False:  # todo: judge whether adapter 
         model = transformers.AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
@@ -172,14 +172,6 @@ def train():
         adapter = get_model_adapter(model_args.model_name_or_path)
         model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
         model.to("cuda")
-    lora_config = LoraConfig(
-        r=lora_args.lora_r,
-        lora_alpha=lora_args.lora_alpha,
-        target_modules=lora_args.lora_target_modules,
-        lora_dropout=lora_args.lora_dropout,
-        bias=lora_args.lora_bias,
-        task_type="CAUSAL_LM",
-    )
 
     if lora_args.q_lora:
         model = prepare_model_for_kbit_training(
@@ -189,6 +181,15 @@ def train():
             # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
             model.is_parallelizable = True
             model.model_parallel = True
+
+    lora_config = LoraConfig(
+        r=lora_args.lora_r,
+        lora_alpha=lora_args.lora_alpha,
+        target_modules=lora_args.lora_target_modules,
+        lora_dropout=lora_args.lora_dropout,
+        bias=lora_args.lora_bias,
+        task_type="CAUSAL_LM",
+    )
 
     model = get_peft_model(model, lora_config)
     if training_args.flash_attn:
