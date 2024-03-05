@@ -235,6 +235,11 @@ def train():
 
         model_adapter_path = model_args.adapter_path
 
+        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_adapter_path, model)
+        str_prompt_woSystem = "输出倾向角色有哪些技能？"
+        print("line 196 str_llm_answer: ")
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
     model.print_trainable_parameters()
 
     if training_args.flash_attn:
@@ -257,10 +262,7 @@ def train():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
-    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.adapter_path, model)
-    str_prompt_woSystem = "输出倾向角色有哪些技能？"
-    print("line 196 str_llm_answer: ")
-    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer(
