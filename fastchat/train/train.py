@@ -35,7 +35,8 @@ IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
 @dataclass
 class ModelArguments:
-    model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    model_name_or_path: Optional[str] = field(default=None)  # "facebook/opt-125m" "/mnt/nfs/zhangqi/zhangqi_nfs/DLM-project/public_models/modelWeights/vicuna-13b-v1.5"
+    adapter_path: Optional[str] = field(default=None)  # "/mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-CQ-v0-1219-epoch10-lr2em4-vdata37232/checkpoint-10470"
     trust_remote_code: bool = field(
         default=False,
         metadata={

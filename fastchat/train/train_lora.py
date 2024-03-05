@@ -173,7 +173,8 @@ def train():
         else (torch.bfloat16 if training_args.bf16 else torch.float32)
     )
 
-    if True:  # todo: judge whether adapter 
+    if model_args.model_name_or_path is not None:
+        assert model_args.adapter_path is None
         model = transformers.AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
@@ -211,33 +212,14 @@ def train():
         model = get_peft_model(model, lora_config)
 
         generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
+        model_adapter_path = model_args.model_name_or_path
     else:
+        assert model_args.adapter_path is not None
         from fastchat.model.model_adapter import get_model_adapter
         kwargs = {"torch_dtype": torch.float32, "revision": 'main'}
-        adapter = get_model_adapter(model_args.model_name_or_path)
-        model, tokenizer = adapter.load_model(model_args.model_name_or_path, kwargs)  # model in peft
+        adapter = get_model_adapter(model_args.adapter_path)
+        model, tokenizer = adapter.load_model(model_args.adapter_path, kwargs)  # model in peft
         model.to("cuda")
-
-        generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.model_name_or_path, model)
-        str_prompt_woSystem = "输出倾向角色有哪些技能？"
-        print("line 196 str_llm_answer: ")
-        str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
-
-        # str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt, temperature=0)
-
-        # print("type(model): ", type(model))
-        # lora_config = LoraConfig(
-        #     r=lora_args.lora_r,
-        #     lora_alpha=lora_args.lora_alpha,
-        #     target_modules=lora_args.lora_target_modules,
-        #     lora_dropout=lora_args.lora_dropout,
-        #     bias=lora_args.lora_bias,
-        #     task_type="CAUSAL_LM",
-        # )
-
-        # model = inject_adapter_in_model(lora_config, model, "second")
-        # model = get_peft_model(model, lora_config)
-        # print("type(model): ", type(model))
 
         try:
             model.print_trainable_parameters()
@@ -251,6 +233,10 @@ def train():
         except AttributeError:
             pass
 
+        model_adapter_path = model_args.adapter_path
+
+    model.print_trainable_parameters()
+
     if training_args.flash_attn:
         for name, module in model.named_modules():
             if "norm" in name:
@@ -263,7 +249,7 @@ def train():
         model.enable_input_require_grads()
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
+        model_adapter_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
         padding_side="right",
@@ -271,16 +257,17 @@ def train():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
+    generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end = load_llm_setting(model_args.adapter_path, model)
+    str_prompt_woSystem = "输出倾向角色有哪些技能？"
+    print("line 196 str_llm_answer: ")
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     trainer = Trainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
     model.config.use_cache = False
-
-    str_prompt_woSystem = "输出倾向角色有哪些技能？"
-    print("line 280 str_llm_answer: ")
-    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
@@ -310,7 +297,7 @@ def train():
 
     str_prompt_woSystem = "输出倾向角色有哪些技能？"
     print("line 310 str_llm_answer: ")
-    str_llm_answer, str_prompt_wSystem = infer_llm(model_args.model_name_or_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
 
 
 if __name__ == "__main__":

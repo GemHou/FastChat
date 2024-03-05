@@ -69,8 +69,8 @@ def load_llm_model(model_path = MODEL_PATH, device = "cuda"):
 
 
 def new_chat(model_path):
-        conv = get_conversation_template(model_path)
-        return conv
+    conv = get_conversation_template(model_path)
+    return conv
 
 
 def infer_llm(model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=None):
