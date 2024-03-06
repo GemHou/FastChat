@@ -47,6 +47,10 @@ CUDA_VISIBLE_DEVICES=5 python3 -m fastchat.serve.hj_clear_cli --model-path ./dat
 CUDA_VISIBLE_DEVICES=1 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch5-lr2em4-vDataKeyword20438_4622-evalGPT/checkpoint-3133
 
 CUDA_VISIBLE_DEVICES=2 python3 -m fastchat.serve.hj_clear_cli --model-path ./data/interim/vicuna-13b-lora-CQ-v0-0102-epoch20-lr2em4-vDataKeyword4550_4733-evalGPT/checkpoint-2031
+
+CUDA_VISIBLE_DEVICES=7 python3 -m fastchat.serve.hj_clear_cli --model-path /mnt/nfs/houjing/repo/FastChat/data/interim/baseHj13B-seed1-bs8-date0305/checkpoint-2130
+
+CUDA_VISIBLE_DEVICES=6 python3 -m fastchat.serve.hj_clear_cli --model-path /mnt/nfs/houjing/repo/FastChat/data/interim/vicuna-13b-lora-0229-epoch10-lr2em4-37232+zqData-03042038/checkpoint-652
 ```
 
 # Collect data
