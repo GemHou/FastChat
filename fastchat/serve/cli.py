@@ -71,6 +71,8 @@ class SimpleChatIO(ChatIO):
                 pre = now
         print(" ".join(output_text[pre:]), flush=True)
         outputs['logprobs']['token_logprobs'][0] = 0
+        # print("outputs['logprobs']['token_logprobs']: ", outputs['logprobs']['token_logprobs'])
+        # print("len(outputs['logprobs']['token_logprobs']): ", len(outputs['logprobs']['token_logprobs']))
         answer_logprobs = np.sum(outputs['logprobs']['token_logprobs'])
         print("answer_logprobs: ", answer_logprobs)
         return " ".join(output_text)

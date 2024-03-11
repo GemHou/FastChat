@@ -299,7 +299,7 @@ def train():
 
     str_prompt_woSystem = "输出倾向角色有哪些技能？"
     print("line 310 str_llm_answer: ")
-    str_llm_answer, str_prompt_wSystem = infer_llm(model_adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_adapter_path, "cuda", model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.1)
 
 
 if __name__ == "__main__":

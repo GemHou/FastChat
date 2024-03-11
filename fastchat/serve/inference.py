@@ -114,6 +114,8 @@ def generate_stream(
         )
     else:
         start_ids = torch.as_tensor([input_ids], device=device)
+    value_to_add = torch.tensor([[29871]], device="cuda")
+    start_ids = torch.cat((start_ids, value_to_add), dim=1)
 
     past_key_values = out = None
     token_logprobs = [None]  # The first token has no logprobs.
@@ -210,13 +212,24 @@ def generate_stream(
         output_ids.append(token)
         if logprobs is not None:
             # Cannot use last_token_logits because logprobs is based on raw logits.
-            token_logprobs.append(
-                torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
-            )
+            new_token_logpob = torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
+            token_logprobs.append(new_token_logpob)
         else:  # HJ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            token_logprobs.append(
-                torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
-            )
+            new_token_logpob = torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()
+            # tokens = tokenizer.decode(token)
+            if new_token_logpob == None:
+                # print("debug!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                pass
+            elif new_token_logpob == 0:
+                new_logit = logits[0, -1, token]
+                # print("new_logit: ", new_logit)
+                tokens = tokenizer.decode(token)
+                # print("tokens: ", tokens)
+                # print("debug!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            else:
+                tokens = tokenizer.decode(token)
+                # print("tokens: ", tokens)
+            token_logprobs.append(new_token_logpob)
 
         if token in stop_token_ids:
             stopped = True

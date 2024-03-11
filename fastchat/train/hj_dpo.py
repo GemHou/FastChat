@@ -193,6 +193,7 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
                             tokenizer=tokenizer,
                             args=training_args,
                             train_dataset=dataset,
+                            eval_dataset=dataset,
                             data_collator=data_collator,
                             # device=device,
                             beta=beta,
@@ -214,37 +215,38 @@ def main():
     str_prompt_woSystem = "who are you?"
     print("str_prompt_woSystem: ", str_prompt_woSystem)
     print("str_llm_answer: ")
-    str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+    str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
     print("str_prompt_wSystem: ", str_prompt_wSystem)
 
+    # dict_data = {
+    #     "prompt": [
+    #         [{"content": str_prompt_wSystem, "role": "user"}],
+    #         [{"content": str_prompt_wSystem, "role": "user"}],
+    #     ],
+    #     "response": [
+    #         [{"content": "Shanghai AI Laboratory.", "role": "assistant"},  # I am a Game AI trained by 
+    #         {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+    #         [{"content": "Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},  # My name is OpenPAL, and I'm a Game AI developed by 
+    #         {"content": "My name is Vicuna, and I'm a language model developed by Large Model Systems Organization (LMSYS).", "role": "assistant"}],
+    #     ],
+    #     "system": ["", ""],
+    #     "tools": ["", ""],
+    # }
+
     dict_data = {
-        "prompt": [
-            [{"content": str_prompt_wSystem, "role": "user"}],
-            [{"content": str_prompt_wSystem, "role": "user"}],
-        ],
-        "response": [
-            [{"content": "I am a Game AI trained by Shanghai AI Laboratory.", "role": "assistant"},
-            {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-            [{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
-            {"content": "My name is Vicuna, and I'm a language model developed by Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-        ],
-        "system": ["", ""],
-        "tools": ["", ""],
+        "prompt": [],
+        "response": [],
+        "system": [],
+        "tools": [],
     }
 
     for i in range(500):
         model_peft.enable_adapter_layers()
 
-        dataset, data_collator = prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data)  # time: 10.4s
-
-        llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
-
-        train_result = llmtuner_dpo_trainer.train()  # time!!!!!!!!!!!!!
-
         str_prompt_woSystem = "who are you?"
         print("str_prompt_woSystem: ", str_prompt_woSystem)
         print("str_llm_answer: ")
-        str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0.9)
+        str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
         print("str_prompt_wSystem: ", str_prompt_wSystem)
 
         # raise
@@ -253,11 +255,19 @@ def main():
             str_llm_answer = str_llm_answer[:256]
 
         dict_data["prompt"].append([{"content": str_prompt_wSystem, "role": "user"}])
-        dict_data["response"].append([{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
+        # dict_data["response"].append([{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
+        #     {"content": str_llm_answer, "role": "assistant"}])
+        dict_data["response"].append([{"content": "我是一个自动驾驶AI，进行科学的自动驾驶决策.", "role": "assistant"},
             {"content": str_llm_answer, "role": "assistant"}])
         dict_data["system"].append("")
         dict_data["tools"].append("")
         print("len(dict_data['response']): ", len(dict_data["response"]))
+
+        dataset, data_collator = prepare_dataset_from_dict(training_args, data_args, tokenizer, dict_data)  # time: 10.4s
+
+        llmtuner_dpo_trainer = prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, dataset, data_collator)  # time: 0.016s
+
+        train_result = llmtuner_dpo_trainer.train()  # time!!!!!!!!!!!!!
 
     print("finished...")
 
