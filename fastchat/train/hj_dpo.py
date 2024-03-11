@@ -187,7 +187,7 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
 
     beta = finetuning_args.dpo_beta
     print("beta: ", beta)
-    beta = 0.1
+    beta = 0.2
 
     llmtuner_dpo_trainer = CustomDPOTrainer(model=model_peft,  # only access peft model
                             tokenizer=tokenizer,
@@ -222,6 +222,82 @@ def forward_model_once(model_peft, tokenizer, list_int_prompt):
     print("str_answer: ", str_answer)
     print("------------------------------------------------------------")
 
+def analyse_training_data(tokenizer):
+    _ = torch.tensor([[12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,    13,
+          7900, 22137, 29901, 29871,  1619,  1024,   338,  4673, 29925,  1964,
+         29892,   322,   306, 29915, 29885,   263,  8448,   319, 29902,  8906,
+           491, 27468, 23535,   319, 29902, 16715,  7606, 29898,  2713, 29909,
+         29875, 28632,   467,     2,     0,     0,     0,     0,     0,     0],
+        [12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,    13,
+          7900, 22137, 29901, 29871, 29871, 30672, 30392,  4007, 22137, 30214,
+         30287, 30502, 30257, 30883, 31505, 31243, 31382, 30883, 30214, 30682,
+         30651, 30742,   234,   176,   151,   232,   147,   135, 31893, 31658,
+         31596, 30267,     2,     0,     0,     0,     0,     0,     0,     0]],
+       device='cuda:0')
+
+    list_int_prompt_1 = [12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,
+          1799,  9047, 13566, 29901,    13,  7900, 22137, 29901, 29871, 29871,
+         30672, 30392, 30287, 30502, 30688, 30846,   236,   172,   193,   236,
+           172,   185, 23869, 30214, 31174, 30448, 31030, 30415, 30210, 30688,
+         30846,   236,   172,   193,   236,   172,   185,   232,   137,   182,
+           234,   176,   153, 29889,     2,     0,     0,     0]
+    list_int_prompt_2 = [12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,
+          1799,  9047, 13566, 29901,    13,  7900, 22137, 29901, 29871, 29871,
+         30672, 30392,  4007, 22137, 30214, 30287, 30502, 30257, 30883, 31505,
+         31243, 31382, 30883, 30214, 30682, 30651, 30742,   234,   176,   151,
+           232,   147,   135, 31893, 31658, 31596, 30267,     2,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0]
+    string_prompt_1 = tokenizer.decode(list_int_prompt_1)
+    print("string_prompt_1: ", string_prompt_1)
+    string_prompt_2 = tokenizer.decode(list_int_prompt_2)
+    print("string_prompt_2: ", string_prompt_2)
+    input_ids = torch.tensor([list_int_prompt_1, list_int_prompt_2], device='cuda:0')
+    
+    attention_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], device='cuda:0')
+    
+    list_int_label_1 = [ -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100, 29871,
+         30672, 30392, 30287, 30502, 30688, 30846,   236,   172,   193,   236,
+           172,   185, 23869, 30214, 31174, 30448, 31030, 30415, 30210, 30688,
+         30846,   236,   172,   193,   236,   172,   185,   232,   137,   182,
+           234,   176,   153, 29889,     2,  -100,  -100,  -100]
+    list_int_label_2 = [ -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100, 29871,
+         30672, 30392,  4007, 22137, 30214, 30287, 30502, 30257, 30883, 31505,
+         31243, 31382, 30883, 30214, 30682, 30651, 30742,   234,   176,   151,
+           232,   147,   135, 31893, 31658, 31596, 30267,     2,  -100,  -100,
+          -100,  -100,  -100,  -100,  -100,  -100,  -100,  -100]
+    string_label_1 = tokenizer.decode(list_int_label_1)
+    print("string_label_1: ", string_label_1)
+    string_label_2 = tokenizer.decode(list_int_label_2)
+    print("string_label_2: ", string_label_2)
+    labels = torch.tensor([list_int_label_1, list_int_label_2], device='cuda:0')
+
 
 def main():
     model_path, model_args, training_args, data_args, finetuning_args = prepare_args()  # time: 0.0018s
@@ -236,6 +312,15 @@ def main():
     str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
     print("str_prompt_wSystem: ", str_prompt_wSystem)
 
+    # infer
+
+    list_int_prompt = [    1,   319, 13563,  1546,   263, 12758,  1404,   322,   385, 23116,
+         21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173, 29892,
+           322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,  5155,
+         29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,  1799,
+          9047, 13566, 29901]
+    forward_model_once(model_peft, tokenizer, list_int_prompt)
+
     list_int_prompt = [    1,   319, 13563,  1546,   263, 12758,  1404,   322,   385, 23116,
          21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173, 29892,
            322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,  5155,
@@ -243,7 +328,34 @@ def main():
           9047, 13566, 29901, 29871]
     forward_model_once(model_peft, tokenizer, list_int_prompt)
 
-    raise
+    list_int_prompt = [    1,   319, 13563,  1546,   263, 12758,  1404,   322,   385, 23116,
+         21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173, 29892,
+           322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,  5155,
+         29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,  1799,
+          9047, 13566, 29901, 29871, 29871]
+    forward_model_once(model_peft, tokenizer, list_int_prompt)
+
+    # train
+
+    # analyse_training_data(tokenizer)
+
+    # old
+    # list_int_prompt = [12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+    #      23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+    #      29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+    #       5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,
+    #       1799,  9047, 13566, 29901,    13,  7900, 22137, 29901, 29871, 29871]
+    # forward_model_once(model_peft, tokenizer, list_int_prompt)
+
+    # new
+    list_int_prompt = [12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901,  1058,   526,   366, 29973,    13,
+          7900, 22137, 29901, 29871]
+    forward_model_once(model_peft, tokenizer, list_int_prompt)
+
+    # raise
 
     dict_data = {
         "prompt": [],
@@ -261,12 +373,12 @@ def main():
         str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
         print("str_prompt_wSystem: ", str_prompt_wSystem)
 
-        # raise
+        raise
 
-        if len(str_llm_answer) > 256:
-            str_llm_answer = str_llm_answer[:256]
+        if len(str_llm_answer) > 64:
+            str_llm_answer = str_llm_answer[:64]
 
-        dict_data["prompt"].append([{"content": str_prompt_wSystem, "role": "user"}])
+        dict_data["prompt"].append([{"content": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: " + str_prompt_woSystem, "role": "user"}])
         # dict_data["response"].append([{"content": "My name is OpenPAL, and I'm a Game AI developed by Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},
         #     {"content": str_llm_answer, "role": "assistant"}])
         dict_data["response"].append([{"content": "我是一个自动驾驶AI，进行科学的自动驾驶决策.", "role": "assistant"},

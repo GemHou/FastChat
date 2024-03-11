@@ -85,7 +85,7 @@ torchrun --nproc_per_node=2 --master_port=20001 fastchat/train/hj_ppo.py
 
 # DPO
 ```bash
-CUDA_VISIBLE_DEVICES=7 python fastchat/train/hj_dpo.py
+CUDA_VISIBLE_DEVICES=6 python fastchat/train/hj_dpo.py
 ```
 
 # Train

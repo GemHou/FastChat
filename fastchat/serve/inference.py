@@ -114,8 +114,8 @@ def generate_stream(
         )
     else:
         start_ids = torch.as_tensor([input_ids], device=device)
-    value_to_add = torch.tensor([[29871]], device="cuda")
-    start_ids = torch.cat((start_ids, value_to_add), dim=1)
+    # value_to_add = torch.tensor([[29871, 29871]], device="cuda")
+    # start_ids = torch.cat((start_ids, value_to_add), dim=1)
 
     past_key_values = out = None
     token_logprobs = [None]  # The first token has no logprobs.
