@@ -204,6 +204,24 @@ def prepare_trainer(training_args, finetuning_args, model_peft, tokenizer, datas
     print("prepare_trainer time: ", time.time() - start_time)
     return llmtuner_dpo_trainer
 
+def forward_model_once(model_peft, tokenizer, list_int_prompt):
+    print("------------------------------------------------------------")
+    string_prompt = tokenizer.decode(list_int_prompt)
+    print("string_prompt: ", string_prompt)
+    start_ids = torch.tensor([list_int_prompt], device='cuda:0')  # [1, 44]
+    out = model_peft(input_ids=start_ids, use_cache=True)
+    logits = out.logits  # [1, 44, 32000]
+    # past_key_values = out.past_key_values  # [1, 32, 44, 128] * 2 * 32
+    last_token_logits = logits[0, -1, :]  # [32000]
+    _, indices = torch.topk(last_token_logits, 2)  # [2]
+    tokens = [int(index) for index in indices.tolist()]  # [2]
+    token = tokens[0]  # [1]
+    float_new_token_logpob = torch.log_softmax(logits[0, -1, :], dim=-1)[token].tolist()  # float
+    print("float_new_token_logpob: ", float_new_token_logpob)
+    str_answer = tokenizer.decode(token)  # string
+    print("str_answer: ", str_answer)
+    print("------------------------------------------------------------")
+
 
 def main():
     model_path, model_args, training_args, data_args, finetuning_args = prepare_args()  # time: 0.0018s
@@ -218,20 +236,14 @@ def main():
     str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
     print("str_prompt_wSystem: ", str_prompt_wSystem)
 
-    # dict_data = {
-    #     "prompt": [
-    #         [{"content": str_prompt_wSystem, "role": "user"}],
-    #         [{"content": str_prompt_wSystem, "role": "user"}],
-    #     ],
-    #     "response": [
-    #         [{"content": "Shanghai AI Laboratory.", "role": "assistant"},  # I am a Game AI trained by 
-    #         {"content": "I am Vicuna, a language model trained by researchers from Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-    #         [{"content": "Shanghai AI Laboratory(ShAiLab).", "role": "assistant"},  # My name is OpenPAL, and I'm a Game AI developed by 
-    #         {"content": "My name is Vicuna, and I'm a language model developed by Large Model Systems Organization (LMSYS).", "role": "assistant"}],
-    #     ],
-    #     "system": ["", ""],
-    #     "tools": ["", ""],
-    # }
+    list_int_prompt = [    1,   319, 13563,  1546,   263, 12758,  1404,   322,   385, 23116,
+         21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173, 29892,
+           322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,  5155,
+         29889,  3148,  1001, 29901,  1058,   526,   366, 29973,   319,  1799,
+          9047, 13566, 29901, 29871]
+    forward_model_once(model_peft, tokenizer, list_int_prompt)
+
+    raise
 
     dict_data = {
         "prompt": [],
