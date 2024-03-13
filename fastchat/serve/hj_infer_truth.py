@@ -7,7 +7,7 @@ from hj_utils_llm import load_llm_model, infer_llm, load_llm_setting, eval_llm_t
 from hj_utils_language import load_qa_pairs_from_json
 
 
-DATASET_NUM = 100  # 100 10
+DATASET_NUM = 10  # 100 10
 
 def eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end):
     list_truth_ratio = []
@@ -28,9 +28,9 @@ def eval_dataset_truth(loaded_qa_pairs, model_path, device, model, tokenizer, ge
 
 def main():
     print("Loading...")
-    json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum679.json'
+    json_file_path = '/mnt/nfs/houjing/repo/FastChat/data/interim/data_vicuna_keyword/data_vicuna_keyword_date012318_dataNum5109.json'
     loaded_qa_pairs = load_qa_pairs_from_json(json_file_path)
-    loaded_qa_pairs = loaded_qa_pairs[:DATASET_NUM]
+    loaded_qa_pairs = loaded_qa_pairs[-DATASET_NUM:]
 
     device = "cuda"
     if False:
