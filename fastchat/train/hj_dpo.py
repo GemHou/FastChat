@@ -335,6 +335,9 @@ def main():
           9047, 13566, 29901, 29871, 29871]
     forward_model_once(model_peft, tokenizer, list_int_prompt)
 
+    list_int_prompt = [    1,   1058, 526,  366,   29973]
+    forward_model_once(model_peft, tokenizer, list_int_prompt)
+
     # train
 
     # analyse_training_data(tokenizer)
@@ -373,7 +376,7 @@ def main():
         str_llm_answer, str_prompt_wSystem = infer_llm(model_path, "cuda", model_peft, tokenizer, generate_stream_func, repetition_penalty, max_new_tokens, context_len, judge_sent_end, str_prompt_woSystem, temperature=0)  # temperature=0.9
         print("str_prompt_wSystem: ", str_prompt_wSystem)
 
-        raise
+        # raise
 
         if len(str_llm_answer) > 64:
             str_llm_answer = str_llm_answer[:64]

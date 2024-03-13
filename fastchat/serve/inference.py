@@ -116,6 +116,14 @@ def generate_stream(
         start_ids = torch.as_tensor([input_ids], device=device)
     # value_to_add = torch.tensor([[29871, 29871]], device="cuda")
     # start_ids = torch.cat((start_ids, value_to_add), dim=1)
+        
+    start_ids = start_ids[:, 1:]
+    value_to_add_f = torch.tensor([[12968, 29901,   319, 13563,  1546,   263, 12758,  1404,   322,   385,
+         23116, 21082, 20255, 29889,   450, 20255,  4076,  8444, 29892, 13173,
+         29892,   322,  1248,   568,  6089,   304,   278,  1404, 29915, 29879,
+          5155, 29889,  3148,  1001, 29901]], device="cuda")
+    value_to_add_r = torch.tensor([[13, 7900, 22137, 29901, 29871, 29871]], device="cuda")
+    start_ids = torch.cat((value_to_add_f, start_ids, value_to_add_r), dim=1)
 
     past_key_values = out = None
     token_logprobs = [None]  # The first token has no logprobs.

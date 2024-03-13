@@ -149,6 +149,14 @@ def judge_truth_dense(str_llm_answer):
         truth_ratio = 0
     elif "不符合事实" in str_llm_answer:
         truth_ratio = 0.33
+    elif "符合事实" in str_llm_answer:
+        truth_ratio = 0.66
+    elif "符合语料" in str_llm_answer:
+        truth_ratio = 0.66
+    elif "正确" in str_llm_answer:
+        truth_ratio = 0.66
+    elif "是的" in str_llm_answer:
+        truth_ratio = 0.66
     else:
         print("Unknown truth!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         truth_ratio = 0.5
